@@ -70,10 +70,11 @@ export async function exportMemory(): Promise<LearningDataExport> {
   return res.json();
 }
 
-export async function generateLessonPlan(): Promise<LessonPlan> {
+export async function generateLessonPlan(dailyMinutes?: number, forceRegenerate: boolean = true): Promise<LessonPlan> {
   const res = await fetch('/api/lesson/plan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ daily_minutes: dailyMinutes, forceRegenerate })
   });
   if (!res.ok) throw new Error('Failed to generate lesson plan');
   return res.json();

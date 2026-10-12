@@ -99,7 +99,7 @@ export default function App() {
     try {
       const userProfile = await getProfile();
       setProfile(userProfile);
-      const newPlan = await generateLessonPlan();
+      const newPlan = await generateLessonPlan(userProfile.daily_minutes);
       setActivePlan(newPlan);
       await refreshMilestones();
     } catch (err) {
@@ -129,10 +129,11 @@ export default function App() {
     }
   };
 
-  const handleStartNewLesson = async () => {
+  const handleStartNewLesson = async (overrideMinutes?: number) => {
     setIsLoading(true);
     try {
-      const newPlan = await generateLessonPlan();
+      const targetMins = overrideMinutes || profile?.daily_minutes;
+      const newPlan = await generateLessonPlan(targetMins);
       setActivePlan(newPlan);
       await refreshMilestones();
     } catch (err) {
@@ -191,7 +192,7 @@ export default function App() {
               Ready to begin today's personalized English session?
             </p>
             <button
-              onClick={handleStartNewLesson}
+              onClick={() => handleStartNewLesson()}
               className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition"
             >
               Start Today's Lesson

@@ -19,6 +19,8 @@ import {
 } from '../src/types/learning.js';
 import { DEFAULT_CURRICULUM } from './defaultCurriculum.js';
 import { DIAGNOSTIC_BANK, DiagnosticBankItem } from './diagnosticBank.js';
+import { budgetManager } from './usageBudget.js';
+import { contentCache } from './contentCache.js';
 
 export interface LearningModelProvider {
   generateLessonPlan(
@@ -97,8 +99,8 @@ export interface LearningModelProvider {
 
 export class GeminiLearningProvider implements LearningModelProvider {
   private ai: GoogleGenAI | null = null;
-  // Prioritize models that have active quota
-  private modelCandidates = ['gemini-3.1-flash-lite', 'gemini-flash-latest', 'gemini-3.8-flash'];
+  // Prioritize active and fast models; 429 quota responses return instantly (~300ms)
+  private modelCandidates = ['gemini-flash-latest', 'gemini-3.8-flash', 'gemini-3.1-flash-lite'];
   private quotaCooldownUntil = 0;
   private servedQuestionHistory: string[] = [];
 
@@ -130,47 +132,101 @@ export class GeminiLearningProvider implements LearningModelProvider {
     return clean.trim();
   }
 
-  private async callGeminiJson<T>(prompt: string, systemInstruction: string): Promise<T | null> {
-    if (!this.ai) return null;
-    if (this.isQuotaExhausted()) {
-      return null;
+  private estimateTokens(text: string): number {
+    return Math.max(1, Math.ceil(text.length / 4));
+  }
+
+  public async callGeminiJson<T>(
+    prompt: string,
+    systemInstruction: string,
+    options?: { userId?: string; operation?: string }
+  ): Promise<T | null> {
+    const userId = options?.userId || 'system';
+    const operation = options?.operation || 'general_query';
+    const estInputTokens = this.estimateTokens(prompt + systemInstruction);
+
+    // Pre-flight quota check if a specific user context is provided
+    if (userId !== 'system') {
+      const allowance = budgetManager.checkAllowance(userId);
+      if (!allowance.allowed) {
+        console.warn(`[Budget] User '${userId}' rejected: ${allowance.reason}`);
+        budgetManager.recordUsage(userId, 'rate_limited', operation, 0, 0, 'rate_limited', allowance.reason);
+        return null;
+      }
+      budgetManager.startRequest(userId);
     }
 
-    for (const model of this.modelCandidates) {
-      try {
-        const response = await this.ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            systemInstruction,
-            responseMimeType: 'application/json',
-            temperature: 0.2
-          }
-        });
-        const text = response.text || '';
-        if (text) {
-          return JSON.parse(this.cleanJson(text)) as T;
+    try {
+      if (!this.ai) {
+        if (userId !== 'system') {
+          budgetManager.recordUsage(userId, 'none', operation, 0, 0, 'error', 'AI client not initialized');
         }
-      } catch (err: any) {
-        const errMsg = err?.message || '';
-        const isQuota = err?.status === 'RESOURCE_EXHAUSTED' ||
-          err?.code === 429 ||
-          errMsg.includes('429') ||
-          errMsg.includes('RESOURCE_EXHAUSTED') ||
-          errMsg.includes('Quota exceeded');
+        return null;
+      }
 
-        if (isQuota) {
-          // Model quota reached for this candidate, try next candidate silently
-          continue;
-        } else {
-          break;
+      if (this.isQuotaExhausted()) {
+        if (userId !== 'system') {
+          budgetManager.recordUsage(userId, 'cooldown', operation, 0, 0, 'rate_limited', 'Global quota cooldown');
+        }
+        return null;
+      }
+
+      for (const model of this.modelCandidates) {
+        try {
+          const apiCall = this.ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: {
+              systemInstruction,
+              responseMimeType: 'application/json',
+              temperature: 0.2
+            }
+          });
+
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('AI request timed out (2.5s)')), 2500)
+          );
+
+          const response = (await Promise.race([apiCall, timeoutPromise])) as any;
+          const text = response?.text || '';
+          if (text) {
+            const parsed = JSON.parse(this.cleanJson(text)) as T;
+            const estOutputTokens = this.estimateTokens(text);
+            if (userId !== 'system') {
+              budgetManager.recordUsage(userId, model, operation, estInputTokens, estOutputTokens, 'success');
+            }
+            return parsed;
+          }
+        } catch (err: any) {
+          const errMsg = err?.message || '';
+          const isQuota =
+            err?.status === 'RESOURCE_EXHAUSTED' ||
+            err?.code === 429 ||
+            errMsg.includes('429') ||
+            errMsg.includes('RESOURCE_EXHAUSTED') ||
+            errMsg.includes('Quota exceeded');
+
+          if (isQuota) {
+            // Model quota reached for this candidate, try next candidate silently
+            continue;
+          } else {
+            console.warn(`[AI] Generation notice with ${model}:`, errMsg.slice(0, 80));
+            continue;
+          }
         }
       }
-    }
 
-    // Pause remote attempts if all failed
-    this.quotaCooldownUntil = Date.now() + 15 * 60 * 1000;
-    return null;
+      // If all candidates failed or timed out, enter 5-minute quota cooldown so subsequent requests don't lag
+      this.quotaCooldownUntil = Date.now() + 5 * 60 * 1000;
+      if (userId !== 'system') {
+        budgetManager.recordUsage(userId, 'fallback', operation, estInputTokens, 0, 'error', 'Candidates unavailable, using calibrated fallback');
+      }
+      return null;
+    } finally {
+      if (userId !== 'system') {
+        budgetManager.endRequest(userId);
+      }
+    }
   }
 
   // =========================================================================
@@ -849,17 +905,68 @@ Output JSON:
   public async generateLessonPlan(
     profile: UserProfile,
     skillStates: LearnerSkillState[],
-    recentErrors: string[]
+    recentErrors: string[],
+    durationOverride?: number
   ): Promise<LessonPlan> {
-    const rawDuration = profile.daily_minutes || 20;
-    const duration: 10 | 20 | 30 = rawDuration <= 12 ? 10 : rawDuration >= 25 ? 30 : 20;
+    const rawDuration = durationOverride || profile.daily_minutes || 20;
+    const duration = Math.max(10, Math.min(60, Math.round(rawDuration)));
     const generalRatio = profile.general_vs_work_ratio || 65;
     const workRatio = 100 - generalRatio;
     const isVi = profile.explanation_language === 'vi';
 
-    const paceMode: 'quick_10' | 'standard_20' | 'deep_30' =
-      duration === 10 ? 'quick_10' : duration === 30 ? 'deep_30' : 'standard_20';
-    const totalPlannedQuestions = duration === 10 ? 4 : duration === 30 ? 12 : 7;
+    // Calculate adaptive question quotas based on user duration setting:
+    // Guarantees ample questions for all sections (never just 1 vocab or 1 grammar)
+    let grammarCount = 5;
+    let vocabCount = 5;
+    let readingCount = 4;
+    let writingCount = 4;
+    let paceMode: 'quick_10' | 'focused_15' | 'standard_20' | 'extended_25' | 'deep_30' | 'mastery_35' | 'intensive_45' = 'standard_20';
+
+    if (duration <= 12) {
+      paceMode = 'quick_10';
+      grammarCount = 3;
+      vocabCount = 3;
+      readingCount = 2;
+      writingCount = 2;
+    } else if (duration <= 17) {
+      paceMode = 'focused_15';
+      grammarCount = 4;
+      vocabCount = 4;
+      readingCount = 3;
+      writingCount = 3;
+    } else if (duration <= 22) {
+      paceMode = 'standard_20';
+      grammarCount = 5;
+      vocabCount = 5;
+      readingCount = 4;
+      writingCount = 4;
+    } else if (duration <= 27) {
+      paceMode = 'extended_25';
+      grammarCount = 6;
+      vocabCount = 6;
+      readingCount = 5;
+      writingCount = 5;
+    } else if (duration <= 32) {
+      paceMode = 'deep_30';
+      grammarCount = 7;
+      vocabCount = 7;
+      readingCount = 6;
+      writingCount = 6;
+    } else if (duration <= 40) {
+      paceMode = 'mastery_35';
+      grammarCount = 8;
+      vocabCount = 8;
+      readingCount = 7;
+      writingCount = 7;
+    } else {
+      paceMode = 'intensive_45';
+      grammarCount = 10;
+      vocabCount = 10;
+      readingCount = 8;
+      writingCount = 8;
+    }
+
+    const totalPlannedQuestions = grammarCount + vocabCount + readingCount + writingCount;
 
     const systemPrompt = `You are an expert, patient English tutor designing a structured daily lesson session.
 The learner's current level is ${profile.current_level}, aiming for ${profile.target_level}.
@@ -867,35 +974,64 @@ Goal: ${profile.goal_summary}.
 Explanation language: ${isVi ? 'Vietnamese' : 'English'}.
 Balance: ${generalRatio}% general English, ${workRatio}% workplace/technical English.
 
-SELECTED DAILY STUDY TIME: ${duration} minutes per day (${paceMode}).
-TARGET QUESTIONS PLANNED: exactly ${totalPlannedQuestions} questions total across activities.
+SELECTED DURATION: ${duration} minutes per day (${paceMode}).
+TARGET QUESTIONS PLANNED: exactly ${totalPlannedQuestions} questions total across ALL 4 parts.
 
-CRITICAL DURATION INSTRUCTIONS:
-- 10 minutes (Quick Practice): Create 3 focused activities totaling 10 minutes and 4 questions (1 Warm-up, 2 Core Concept drills, 1 Exit check).
-- 20 minutes (Standard Practice): Create 4 balanced activities totaling 20 minutes and 7 questions (1 Warm-up, 2 Grammar in context, 2 Vocabulary & collocations, 2 Reading/writing application).
-- 30 minutes (Deep Practice): Create 5 comprehensive activities totaling 30 minutes and 12 questions (2 Error clinic/warm-up, 3 In-depth grammar & nuances, 3 Professional vocabulary & collocations, 2 Contextual reading & inference, 2 Authentic workplace production & exit check).
+CRITICAL BALANCED STRUCTURE REQUIREMENTS:
+Every lesson MUST have exactly 4 parts covering all core competencies:
+1. Grammar & Syntax: ${grammarCount} questions (Warm-up retrieval, core incident report rules, conditionals, transformations).
+2. Vocabulary & Collocations: ${vocabCount} questions (Full IPA cards, natural workplace collocations, contrasting definitions).
+3. Reading Comprehension & Inference: ${readingCount} questions (Contextual scenario passage with comprehension & subtle inference).
+4. Workplace Writing & Expression: ${writingCount} questions (Authentic Slack updates, blocker reporting, client notes).
 
 Recent error patterns to address: ${JSON.stringify(recentErrors.slice(0, 3))}.
 Known skills needing practice: ${JSON.stringify(skillStates.filter(s => s.status !== 'mastered').map(s => s.skill_name).slice(0, 3))}.
 
 Output strictly JSON:
 {
-  "primary_objective": string (1 clear objective tailored to today's duration),
+  "primary_objective": string (1 clear objective tailored to today's ${duration}-minute session),
   "reason_for_selection": string (pedagogical reason in ${isVi ? 'Vietnamese' : 'English'}),
   "sections": [
     {
-      "section": "grammar" | "vocabulary" | "reading" | "writing",
-      "activity_type": "warmup_review" | "concept_practice" | "vocab_acquisition" | "reading_analysis" | "writing_production" | "exit_synthesis",
+      "section": "grammar",
+      "activity_type": "concept_practice",
       "title": string,
       "description": string,
       "estimated_minutes": number,
-      "target_questions_count": number,
+      "target_questions_count": ${grammarCount},
+      "skill_target": string
+    },
+    {
+      "section": "vocabulary",
+      "activity_type": "vocab_acquisition",
+      "title": string,
+      "description": string,
+      "estimated_minutes": number,
+      "target_questions_count": ${vocabCount},
+      "skill_target": string
+    },
+    {
+      "section": "reading",
+      "activity_type": "reading_analysis",
+      "title": string,
+      "description": string,
+      "estimated_minutes": number,
+      "target_questions_count": ${readingCount},
+      "skill_target": string
+    },
+    {
+      "section": "writing",
+      "activity_type": "writing_production",
+      "title": string,
+      "description": string,
+      "estimated_minutes": number,
+      "target_questions_count": ${writingCount},
       "skill_target": string
     }
   ]
 }`;
 
-    const prompt = `Create a customized daily English lesson plan for ${duration} minutes (${paceMode}) targeting ${totalPlannedQuestions} total questions.`;
+    const prompt = `Create a customized daily English lesson plan for ${duration} minutes (${paceMode}) targeting ${totalPlannedQuestions} total questions across Grammar (${grammarCount}), Vocabulary (${vocabCount}), Reading (${readingCount}), and Writing (${writingCount}).`;
     const aiResult = await this.callGeminiJson<{
       primary_objective: string;
       reason_for_selection: string;
@@ -910,222 +1046,130 @@ Output strictly JSON:
       }>;
     }>(prompt, systemPrompt);
 
-    if (aiResult && aiResult.sections && aiResult.sections.length > 0) {
-      let allocatedQuestions = 0;
-      const parsedSections = aiResult.sections.map((s, idx) => {
-        const count = s.target_questions_count || (duration === 10 ? (idx === 1 ? 2 : 1) : duration === 30 ? (idx <= 2 ? 3 : 2) : (idx === 0 ? 1 : 2));
-        allocatedQuestions += count;
+    const canonicalSections: SectionType[] = ['grammar', 'vocabulary', 'reading', 'writing'];
+    const getQuota = (sec: SectionType) => {
+      switch (sec) {
+        case 'grammar': return grammarCount;
+        case 'vocabulary': return vocabCount;
+        case 'reading': return readingCount;
+        case 'writing': return writingCount;
+      }
+    };
+
+    if (aiResult && aiResult.sections && Array.isArray(aiResult.sections) && aiResult.sections.length > 0) {
+      const parsedSections = canonicalSections.map(secName => {
+        const found = aiResult.sections.find(s => s.section === secName);
+        const quota = getQuota(secName);
+        const defaultTitle = isVi
+          ? secName === 'grammar' ? 'Phần 1 — Ngữ pháp & Cấu trúc câu'
+            : secName === 'vocabulary' ? 'Phần 2 — Từ vựng cốt lõi & Collocations'
+            : secName === 'reading' ? 'Phần 3 — Đọc hiểu tình huống & Suy luận'
+            : 'Phần 4 — Viết ứng dụng công việc & Phản xạ'
+          : secName === 'grammar' ? 'Part 1 — Grammar & Structure'
+            : secName === 'vocabulary' ? 'Part 2 — Core Vocabulary & Collocations'
+            : secName === 'reading' ? 'Part 3 — Contextual Reading & Inference'
+            : 'Part 4 — Workplace Writing & Production';
+
         return {
-          section: s.section,
-          title: s.title,
-          description: s.description,
-          estimated_minutes: s.estimated_minutes,
-          skill_target: s.skill_target,
-          activity_type: s.activity_type || (s.section === 'vocabulary' ? 'vocab_acquisition' : s.section === 'reading' ? 'reading_analysis' : s.section === 'writing' ? 'writing_production' : idx === 0 ? 'warmup_review' : 'concept_practice'),
-          target_questions_count: count,
+          section: secName,
+          title: found?.title || defaultTitle,
+          description: found?.description || `${quota} ${isVi ? 'câu hỏi thực hành' : 'practice questions'}`,
+          estimated_minutes: found?.estimated_minutes || Math.round(duration / 4),
+          skill_target: found?.skill_target || `Core ${secName} skills`,
+          activity_type: found?.activity_type || (secName === 'vocabulary' ? 'vocab_acquisition' : secName === 'reading' ? 'reading_analysis' : secName === 'writing' ? 'writing_production' : 'concept_practice'),
+          target_questions_count: quota, // Always strictly enforce the duration-calibrated quota
           completed_questions_count: 0,
           completed: false
         };
       });
 
+      const totalCount = parsedSections.reduce((sum, sec) => sum + sec.target_questions_count, 0);
+
       return {
         lesson_id: `lesson-${Date.now()}`,
         lesson_number: 1,
         date: new Date().toISOString().split('T')[0],
-        primary_objective: aiResult.primary_objective,
-        reason_for_selection: aiResult.reason_for_selection,
+        primary_objective: aiResult.primary_objective || (isVi ? `Luyện tập thích ứng ${duration} phút: Củng cố 4 kỹ năng toàn diện` : `${duration}-Minute Adaptive Practice across all 4 core skills`),
+        reason_for_selection: aiResult.reason_for_selection || (isVi ? `Phiên học thích ứng ${duration} phút với ${totalCount} câu hỏi cân đối giữa ngữ pháp, từ vựng, đọc hiểu và viết.` : `Comprehensive ${duration}-minute session with ${totalCount} active questions.`),
         estimated_duration_minutes: duration,
         session_pace_mode: paceMode,
-        total_planned_questions: allocatedQuestions > 0 ? allocatedQuestions : totalPlannedQuestions,
+        total_planned_questions: totalCount,
         sections: parsedSections,
         status: 'in_progress'
       };
     }
-
-    // High quality deterministic fallback calibrated to 10, 20, or 30 minutes
-    if (duration === 10) {
-      return {
-        lesson_id: `lesson-${Date.now()}`,
-        lesson_number: 1,
-        date: new Date().toISOString().split('T')[0],
-        primary_objective: isVi
-          ? 'Luyện nhanh 10 phút: Làm chủ Past Perfect trong báo cáo tiến độ và kiểm tra phản xạ'
-          : '10-Minute Quick Practice: Fast Retrieval of Past Perfect and Clear Status Update',
-        reason_for_selection: isVi
-          ? 'Phiên học 10 phút tập trung vào 1 mục tiêu ngữ pháp then chốt kèm 4 câu hỏi luyện tập và kiểm tra thoát bài nhanh.'
-          : 'Condensed 10-minute session targeting high-yield past perfect accuracy with immediate exit check.',
-        estimated_duration_minutes: 10,
-        session_pace_mode: 'quick_10',
-        total_planned_questions: 4,
-        sections: [
-          {
-            section: 'grammar',
-            activity_type: 'warmup_review',
-            title: isVi ? 'Phần 1 — Khởi động & Ôn tập nhanh' : 'Part 1 — Warm-up & Retrieval Check',
-            description: isVi ? 'Kích hoạt trí nhớ về mốc thời gian "By the time" trong quá khứ.' : 'Quick check on past temporal anchors.',
-            estimated_minutes: 2,
-            target_questions_count: 1,
-            completed_questions_count: 0,
-            skill_target: 'Past Simple vs. Past Perfect',
-            completed: false
-          },
-          {
-            section: 'grammar',
-            activity_type: 'concept_practice',
-            title: isVi ? 'Phần 2 — Quy tắc cốt lõi & Luyện tập' : 'Part 2 — Core Concept & Focused Practice',
-            description: isVi ? '2 câu hỏi thực hành liên tiếp về phối hợp thì quá khứ hoàn thành.' : '2 consecutive practice drills on narrative tense coordination.',
-            estimated_minutes: 5,
-            target_questions_count: 2,
-            completed_questions_count: 0,
-            skill_target: 'Past Perfect in Incident Explanations',
-            completed: false
-          },
-          {
-            section: 'writing',
-            activity_type: 'exit_synthesis',
-            title: isVi ? 'Phần 3 — Thoát bài & Phản xạ ứng dụng' : 'Part 3 — Exit Check & Quick Application',
-            description: isVi ? '1 câu hỏi viết ngắn 2 câu cập nhật tiến độ công việc.' : '1 prompt applying past narrative to a realistic workplace update.',
-            estimated_minutes: 3,
-            target_questions_count: 1,
-            completed_questions_count: 0,
-            skill_target: 'Clear Workplace Status Updates',
-            completed: false
-          }
-        ],
-        status: 'in_progress'
-      };
-    } else if (duration === 30) {
-      return {
-        lesson_id: `lesson-${Date.now()}`,
-        lesson_number: 1,
-        date: new Date().toISOString().split('T')[0],
-        primary_objective: isVi
-          ? 'Học sâu 30 phút: Thành thạo toàn diện Ngữ pháp giả định, Collocations kỹ thuật và Giao tiếp viết chuyên nghiệp'
-          : '30-Minute Deep Practice: Comprehensive Mastery of Conditionals, Collocations, and Asynchronous Technical Writing',
-        reason_for_selection: isVi
-          ? 'Phiên học sâu 30 phút với 5 hoạt động kết nối và 12 câu hỏi thực hành đa dạng, đi sâu từ sửa lỗi sai cũ đến đọc hiểu phân tích và viết chuyên nghiệp.'
-          : 'Extensive 30-minute deep practice covering error clinic, multi-round grammar transformation, active collocations, reading analysis, and authentic written production.',
-        estimated_duration_minutes: 30,
-        session_pace_mode: 'deep_30',
-        total_planned_questions: 12,
-        sections: [
-          {
-            section: 'grammar',
-            activity_type: 'warmup_review',
-            title: isVi ? 'Phần 1 — Khắc phục lỗi sai cũ & Khởi động' : 'Part 1 — Mistake Clinic & Warm-up',
-            description: isVi ? '2 câu hỏi rà soát các điểm dễ nhầm lẫn (thì động từ và câu điều kiện).' : '2 targeted questions addressing recurring past slips.',
-            estimated_minutes: 4,
-            target_questions_count: 2,
-            completed_questions_count: 0,
-            skill_target: 'Third & Mixed Conditionals in Narrative',
-            completed: false
-          },
-          {
-            section: 'grammar',
-            activity_type: 'concept_practice',
-            title: isVi ? 'Phần 2 — Ngữ pháp chuyên sâu & Biến đổi câu' : 'Part 2 — In-Depth Grammar Analysis & Transformation',
-            description: isVi ? '3 câu hỏi qua nhiều định dạng (trắc nghiệm, điền khuyết, câu chẻ nhấn mạnh).' : '3 multi-format questions testing precision and nuanced transformations.',
-            estimated_minutes: 7,
-            target_questions_count: 3,
-            completed_questions_count: 0,
-            skill_target: 'Passive Voice in Technical Reports & Cleft Emphasis',
-            completed: false
-          },
-          {
-            section: 'vocabulary',
-            activity_type: 'vocab_acquisition',
-            title: isVi ? 'Phần 3 — Từ vựng cốt lõi & Collocations tự nhiên' : 'Part 3 — Professional Vocabulary & Collocations',
-            description: isVi ? '3 câu hỏi: Thẻ từ vựng IPA chi tiết (mitigate, streamline, leverage) kèm ngữ cảnh tương phản.' : '3 items with IPA cards, natural collocations, and contextual comparison.',
-            estimated_minutes: 7,
-            target_questions_count: 3,
-            completed_questions_count: 0,
-            skill_target: 'Collocations with Mitigate, Streamline & Leverage',
-            completed: false
-          },
-          {
-            section: 'reading',
-            activity_type: 'reading_analysis',
-            title: isVi ? 'Phần 4 — Đọc hiểu tình huống & Phân tích suy luận' : 'Part 4 — In-Depth Reading & Critical Inference',
-            description: isVi ? 'Đoạn văn 130 từ về văn hoá code review và giao tiếp bất đồng bộ + 2 câu hỏi suy luận.' : 'Authentic 130-word scenario passage with 2 analytical inference questions.',
-            estimated_minutes: 6,
-            target_questions_count: 2,
-            completed_questions_count: 0,
-            skill_target: 'Technical Strategy Reading & Empathy in Code Review',
-            completed: false
-          },
-          {
-            section: 'writing',
-            activity_type: 'writing_production',
-            title: isVi ? 'Phần 5 — Viết thực chiến & Tổng hợp thoát bài' : 'Part 5 — Authentic Workplace Production & Synthesis',
-            description: isVi ? '2 bài tập viết thực tế (cập nhật tiến độ blocker & thông báo hoãn tiến độ với khách hàng).' : '2 writing tasks with native rubric feedback and error tags.',
-            estimated_minutes: 6,
-            target_questions_count: 2,
-            completed_questions_count: 0,
-            skill_target: 'Clear Workplace Status Updates & Client Notifications',
-            completed: false
-          }
-        ],
-        status: 'in_progress'
-      };
     }
 
-    // Default 20-minute standard practice
+    // High quality deterministic fallback calibrated to the user's exact duration
+    const grammarMins = Math.max(3, Math.round(duration * 0.3));
+    const vocabMins = Math.max(3, Math.round(duration * 0.25));
+    const readMins = Math.max(3, Math.round(duration * 0.25));
+    const writeMins = Math.max(2, duration - grammarMins - vocabMins - readMins);
+
     return {
       lesson_id: `lesson-${Date.now()}`,
       lesson_number: 1,
       date: new Date().toISOString().split('T')[0],
       primary_objective: isVi
-        ? 'Tiêu chuẩn 20 phút: Củng cố thì quá khứ hoàn thành, Collocations hành động và Đọc hiểu chiến lược kỹ thuật'
-        : '20-Minute Standard Practice: Narrative Tense Precision, High-Impact Collocations, and Workplace Application',
+        ? `Luyện tập thích ứng ${duration} phút: Củng cố thì quá khứ & điều kiện, Collocations kỹ thuật, Đọc hiểu và Viết chuyên nghiệp`
+        : `${duration}-Minute Adaptive Practice: Narrative & Conditional Precision, Professional Collocations, Reading Inference, and Written Production`,
       reason_for_selection: isVi
-        ? 'Phiên học tiêu chuẩn 20 phút với 4 hoạt động cân bằng và 7 câu hỏi trải đều qua ngữ pháp, từ vựng, đọc hiểu và viết.'
-        : 'Balanced 20-minute practice delivering 7 questions across grammar, vocabulary, reading, and workplace writing.',
-      estimated_duration_minutes: 20,
-      session_pace_mode: 'standard_20',
-      total_planned_questions: 7,
+        ? `Phiên học thích ứng ${duration} phút với đầy đủ 4 phần và ${totalPlannedQuestions} câu hỏi thực hành liên tục, cân đối giữa ngữ pháp (${grammarCount} câu), từ vựng (${vocabCount} câu), đọc hiểu (${readingCount} câu) và viết (${writingCount} câu).`
+        : `Comprehensive ${duration}-minute session calibrated to deliver ${totalPlannedQuestions} active questions across Grammar (${grammarCount}), Vocabulary (${vocabCount}), Reading (${readingCount}), and Writing (${writingCount}).`,
+      estimated_duration_minutes: duration,
+      session_pace_mode: paceMode,
+      total_planned_questions: totalPlannedQuestions,
       sections: [
         {
           section: 'grammar',
-          activity_type: 'warmup_review',
-          title: isVi ? 'Phần 1 — Khởi động & Ôn tập củng cố' : 'Part 1 — Warm-up & Pattern Review',
-          description: isVi ? '1 câu hỏi khởi động nhanh về mốc thời gian "By the time".' : '1 warm-up retrieval question on narrative time anchors.',
-          estimated_minutes: 3,
-          target_questions_count: 1,
-          completed_questions_count: 0,
-          skill_target: 'Past Simple vs. Past Perfect',
-          completed: false
-        },
-        {
-          section: 'grammar',
           activity_type: 'concept_practice',
-          title: isVi ? 'Phần 2 — Ngữ pháp theo ngữ cảnh' : 'Part 2 — Grammar in Context',
-          description: isVi ? '2 câu hỏi luyện tập sâu thì quá khứ hoàn thành và câu điều kiện trong báo cáo.' : '2 contextual grammar questions on incident reports and conditionals.',
-          estimated_minutes: 6,
-          target_questions_count: 2,
+          title: isVi ? 'Phần 1 — Ngữ pháp & Cấu trúc câu' : 'Part 1 — Grammar & Structure',
+          description: isVi
+            ? `${grammarCount} câu hỏi rà soát thì quá khứ hoàn thành, câu điều kiện hỗn hợp và đảo ngữ.`
+            : `${grammarCount} questions on narrative tense coordination, mixed conditionals, and inversion.`,
+          estimated_minutes: grammarMins,
+          target_questions_count: grammarCount,
           completed_questions_count: 0,
-          skill_target: 'Third & Mixed Conditionals & Passive Voice',
+          skill_target: 'Past Perfect, Mixed Conditionals & Inversion',
           completed: false
         },
         {
           section: 'vocabulary',
           activity_type: 'vocab_acquisition',
-          title: isVi ? 'Phần 3 — Từ vựng & Collocations' : 'Part 3 — Active Vocabulary & Collocations',
-          description: isVi ? '2 câu hỏi từ vựng kèm phát âm IPA, trọng âm và collocations với "mitigate" & "streamline".' : '2 questions with full IPA cards and collocation drills.',
-          estimated_minutes: 5,
-          target_questions_count: 2,
+          title: isVi ? 'Phần 2 — Từ vựng cốt lõi & Collocations' : 'Part 2 — Core Vocabulary & Collocations',
+          description: isVi
+            ? `${vocabCount} câu hỏi từ vựng kèm phát âm IPA, trọng âm và collocations thực tế (mitigate, streamline, leverage, bottleneck).`
+            : `${vocabCount} vocabulary cards with full IPA guidance and workplace collocations.`,
+          estimated_minutes: vocabMins,
+          target_questions_count: vocabCount,
           completed_questions_count: 0,
-          skill_target: 'Collocations with Mitigate & Streamline',
+          skill_target: 'High-Impact Professional Collocations',
           completed: false
         },
         {
           section: 'reading',
           activity_type: 'reading_analysis',
-          title: isVi ? 'Phần 4 — Đọc hiểu & Diễn đạt công việc' : 'Part 4 — Contextual Reading & Workplace Expression',
-          description: isVi ? '2 câu hỏi: 1 bài đọc ngắn 128 từ về technical debt + 1 bài viết cập nhật tiến độ công việc.' : '2 questions: 1 passage comprehension check and 1 workplace written update.',
-          estimated_minutes: 6,
-          target_questions_count: 2,
+          title: isVi ? 'Phần 3 — Đọc hiểu tình huống & Phân tích suy luận' : 'Part 3 — Contextual Reading & Inference',
+          description: isVi
+            ? `${readingCount} câu hỏi: Đoạn văn ngữ cảnh công việc kỹ thuật thực tế và câu hỏi suy luận sâu.`
+            : `${readingCount} analytical questions based on real-world engineering and workplace passages.`,
+          estimated_minutes: readMins,
+          target_questions_count: readingCount,
           completed_questions_count: 0,
-          skill_target: 'Tech Strategy Reading & Clear Status Updates',
+          skill_target: 'Technical Strategy Reading & Critical Inference',
+          completed: false
+        },
+        {
+          section: 'writing',
+          activity_type: 'writing_production',
+          title: isVi ? 'Phần 4 — Viết ứng dụng công việc & Phản xạ' : 'Part 4 — Workplace Writing & Production',
+          description: isVi
+            ? `${writingCount} bài tập viết tình huống thực tế (cập nhật blocker, thông báo hoãn tiến độ, đề xuất giải pháp) với phản hồi AI chi tiết.`
+            : `${writingCount} authentic writing prompts with detailed rubric feedback, error tags, and model suggestions.`,
+          estimated_minutes: writeMins,
+          target_questions_count: writingCount,
+          completed_questions_count: 0,
+          skill_target: 'Clear Workplace Status Updates & Proposals',
           completed: false
         }
       ],
@@ -1196,19 +1240,11 @@ JSON Output Schema:
     const matching = DEFAULT_CURRICULUM.filter(item => item.section === section);
     if (matching.length > 0) {
       const unserved = matching.filter(item => !this.servedQuestionHistory.includes(item.id));
-      const candidates = unserved.length > 0 ? unserved : matching;
-      
-      // If index > 0, try to pick fill_in_blank or alternate format if available
-      let selected = candidates[0];
-      if (questionIndex > 0) {
-        const altFormat = candidates.find(c => c.question.question_type !== 'multiple_choice');
-        selected = altFormat || candidates[Math.floor(Math.random() * candidates.length)];
-      } else {
-        selected = candidates[Math.floor(Math.random() * candidates.length)];
-      }
+      const pool = unserved.length > 0 ? unserved : matching;
+      const selected = pool[questionIndex % pool.length] || matching[questionIndex % matching.length];
 
       this.servedQuestionHistory.push(selected.id);
-      if (this.servedQuestionHistory.length > 15) {
+      if (this.servedQuestionHistory.length > 30) {
         this.servedQuestionHistory.shift();
       }
 

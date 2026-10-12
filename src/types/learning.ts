@@ -181,9 +181,9 @@ export interface LessonPlan {
   date: string;
   primary_objective: string;
   reason_for_selection: string;
-  estimated_duration_minutes: number; // 10, 20, or 30
-  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
-  total_planned_questions: number; // e.g. 4 for 10m, 7 for 20m, 12 for 30m
+  estimated_duration_minutes: number; // 10, 15, 20, 25, 30, 35, 45
+  session_pace_mode?: 'quick_10' | 'focused_15' | 'standard_20' | 'extended_25' | 'deep_30' | 'mastery_35' | 'intensive_45';
+  total_planned_questions: number;
   sections: LessonSectionPlan[];
   status: 'planned' | 'in_progress' | 'completed' | 'paused';
 }
@@ -198,7 +198,7 @@ export interface DailySummary {
   total_planned_questions?: number;
   time_spent_minutes?: number;
   target_duration_minutes?: number;
-  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
+  session_pace_mode?: 'quick_10' | 'focused_15' | 'standard_20' | 'extended_25' | 'deep_30' | 'mastery_35' | 'intensive_45';
   accuracy_rate: number;
   key_takeaways: string[];
   vocabulary_learned: string[];

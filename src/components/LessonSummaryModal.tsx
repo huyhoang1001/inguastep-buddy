@@ -17,7 +17,7 @@ import { playEnglishSpeech } from '../services/api.ts';
 interface LessonSummaryModalProps {
   summary: DailySummary;
   onClose: () => void;
-  onStartNewLesson: () => void;
+  onStartNewLesson: (minutes?: number) => void;
 }
 
 export const LessonSummaryModal: React.FC<LessonSummaryModalProps> = ({
@@ -28,6 +28,17 @@ export const LessonSummaryModal: React.FC<LessonSummaryModalProps> = ({
   const [rating, setRating] = useState<'too_easy' | 'about_right' | 'too_difficult'>(
     summary.learner_rating || 'about_right'
   );
+  const [nextMinutes, setNextMinutes] = useState<number>(summary.target_duration_minutes || 20);
+
+  const durationOptions = [
+    { mins: 10, label: '10m', sub: '8 Qs' },
+    { mins: 15, label: '15m', sub: '12 Qs' },
+    { mins: 20, label: '20m', sub: '15 Qs' },
+    { mins: 25, label: '25m', sub: '19 Qs' },
+    { mins: 30, label: '30m', sub: '23 Qs' },
+    { mins: 35, label: '35m', sub: '27 Qs' },
+    { mins: 45, label: '45m', sub: '34 Qs' }
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
@@ -191,6 +202,37 @@ export const LessonSummaryModal: React.FC<LessonSummaryModalProps> = ({
           </div>
         </div>
 
+        {/* Next Session Duration Picker */}
+        <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">
+              Set Next Session Duration
+            </span>
+            <span className="text-xs font-bold text-white bg-indigo-600/80 px-2 py-0.5 rounded-lg border border-indigo-500/40">
+              {nextMinutes} mins
+            </span>
+          </div>
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+            {durationOptions.map(opt => (
+              <button
+                key={opt.mins}
+                type="button"
+                onClick={() => setNextMinutes(opt.mins)}
+                className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${
+                  nextMinutes === opt.mins
+                    ? 'bg-indigo-600 border-indigo-400 text-white font-bold shadow-md'
+                    : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:border-slate-500'
+                }`}
+              >
+                <span className="text-xs">{opt.label}</span>
+                <span className={`text-[10px] ${nextMinutes === opt.mins ? 'text-indigo-200' : 'text-slate-400'}`}>
+                  {opt.sub}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Action buttons */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
           <button
@@ -203,11 +245,11 @@ export const LessonSummaryModal: React.FC<LessonSummaryModalProps> = ({
           <button
             onClick={() => {
               onClose();
-              onStartNewLesson();
+              onStartNewLesson(nextMinutes);
             }}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2"
           >
-            <span>Start Next Lesson</span>
+            <span>Start Next Lesson ({nextMinutes} mins)</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

@@ -689,5 +689,822 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
       hint: 'Nhìn vào câu: "By shifting from critique of the author to objective exploration... junior engineers ask for feedback earlier..."',
       explanation_rule: 'Đoạn văn kết luận: "By shifting from critique of the author to objective exploration... teams protect psychological safety. Consequently, junior engineers ask for feedback earlier".'
     }
+  },
+
+  // --- ADDITIONAL GRAMMAR ITEMS ---
+  {
+    id: 'gram-b2-subjunctive-1',
+    section: 'grammar',
+    skill_id: 'subjunctive_mood',
+    skill_name: 'Subjunctive Mood in Recommendations',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-subj-1',
+      section: 'grammar',
+      skill_id: 'subjunctive_mood',
+      skill_name: 'Subjunctive Mood in Recommendations',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Sau các động từ khuyên bảo hoặc yêu cầu trang trọng (recommend, insist, propose, suggest that S + V_bare), động từ ở mệnh đề that luôn ở dạng nguyên mẫu không "to".',
+      prompt: 'The security auditor strongly recommended that our operations team ____ all root credentials before the weekend.',
+      options: [
+        { id: 'A', text: 'rotates' },
+        { id: 'B', text: 'rotate' },
+        { id: 'C', text: 'rotated' },
+        { id: 'D', text: 'would rotate' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'rotate',
+      accepted_alternatives: ['rotate'],
+      hint: 'Cấu trúc giả định thức: recommend that S + V_nguyên thể (bare infinitive).',
+      explanation_rule: 'Cấu trúc Subjunctive: "recommend that + S + (should) + V_bare". "rotate" là dạng đúng dù chủ ngữ là số ít hay thì quá khứ.'
+    }
+  },
+  {
+    id: 'gram-b2-cleft-1',
+    section: 'grammar',
+    skill_id: 'cleft_sentences',
+    skill_name: 'Cleft Sentences for Precision Emphasis',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-cleft-1',
+      section: 'grammar',
+      skill_id: 'cleft_sentences',
+      skill_name: 'Cleft Sentences for Precision Emphasis',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Cleft sentence (It was X that... / What we need is...) dùng để nhấn mạnh chính xác yếu tố cốt lõi của một vấn đề.',
+      prompt: 'It was not the database query but the unoptimized network serialization ____ caused the severe latency spike.',
+      options: [
+        { id: 'A', text: 'which' },
+        { id: 'B', text: 'that' },
+        { id: 'C', text: 'what' },
+        { id: 'D', text: 'where' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'that',
+      accepted_alternatives: ['that'],
+      hint: 'Mẫu câu chẻ nhấn mạnh: "It was/is [thành phần nhấn mạnh] that + S/V".',
+      explanation_rule: 'Cấu trúc câu chẻ chuẩn: "It is/was + X + that + Y". "that" liên kết mệnh đề nhấn mạnh nguyên nhân thực sự.'
+    }
+  },
+  {
+    id: 'gram-b2-participle-1',
+    section: 'grammar',
+    skill_id: 'participle_clauses',
+    skill_name: 'Participle Clauses for Concise Writing',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-part-1',
+      section: 'grammar',
+      skill_id: 'participle_clauses',
+      skill_name: 'Participle Clauses for Concise Writing',
+      question_type: 'fill_in_blank',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Rút gọn mệnh đề cùng chủ ngữ bằng phân từ hoàn thành (Having + V3) giúp câu văn gãy gọn và chuyên nghiệp hơn.',
+      prompt: 'Complete the sentence using the past participle form of "complete":\n"Having ________________ (complete) the automated regression run, the QA lead approved the hotfix release."',
+      expected_answer_text: 'completed',
+      accepted_alternatives: ['completed'],
+      hint: 'Dùng dạng V3/ed sau "Having" để chỉ hành động đã làm xong trước đó.',
+      explanation_rule: 'Dạng phân từ hoàn thành: "Having + V3/ed" diễn tả hành động kiểm thử đã kết thúc trước khi lead phê duyệt bản vá.'
+    }
+  },
+  {
+    id: 'gram-b2-modal-past-1',
+    section: 'grammar',
+    skill_id: 'past_modals',
+    skill_name: 'Past Modals of Deduction',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-modal-past-1',
+      section: 'grammar',
+      skill_id: 'past_modals',
+      skill_name: 'Past Modals of Deduction',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Dùng "must have + V3" khi gần như chắc chắn một việc đã xảy ra trong quá khứ dựa trên bằng chứng rõ ràng.',
+      prompt: 'The server memory usage dropped to normal levels at exactly 03:00 AM; the automated garbage collection script ____ kicked in as scheduled.',
+      options: [
+        { id: 'A', text: 'must have' },
+        { id: 'B', text: 'should have' },
+        { id: 'C', text: 'might be' },
+        { id: 'D', text: 'would' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'must have',
+      accepted_alternatives: ['must have'],
+      hint: 'Dựa trên bằng chứng bộ nhớ giảm về mức bình thường, ta suy luận chắc chắn điều đó đã diễn ra.',
+      explanation_rule: '"must have + V3" thể hiện suy đoán chắc chắn về một sự kiện trong quá khứ dựa trên bằng chứng thực tế.'
+    }
+  },
+
+  // --- ADDITIONAL VOCABULARY ITEMS ---
+  {
+    id: 'vocab-b2-discrepancy',
+    section: 'vocabulary',
+    skill_id: 'collocation_discrepancy',
+    skill_name: 'Collocations with Discrepancy',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-discrepancy',
+      section: 'vocabulary',
+      skill_id: 'collocation_discrepancy',
+      skill_name: 'Collocations with Discrepancy',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'discrepancy',
+        part_of_speech: 'noun',
+        ipa: '/dɪˈskrep.ən.si/',
+        pronunciation_tip: 'Trọng âm rơi vào âm thứ hai: dis-CREP-an-cy. Âm đuôi /si/ nhẹ nhàng.',
+        meaning: 'sự sai lệch hoặc không khớp nhau giữa hai con số, báo cáo hoặc dữ liệu lẽ ra phải giống nhau',
+        collocation_pattern: 'resolve / identify / reconcile + discrepancy',
+        example_general: 'There was a noticeable discrepancy between the two survey reports.',
+        example_workplace: 'The finance auditor flagged a five percent discrepancy between database invoices and Stripe records.',
+        similar_word_comparison: {
+          word: 'difference',
+          difference: '"difference" là sự khác nhau nói chung; "discrepancy" chỉ sự chênh lệch bất thường cần phải điều tra làm rõ.'
+        }
+      },
+      prompt: 'Which word best describes an unexpected mismatch between recorded inventory and physical stock?\n"The data migration failed because we discovered a significant ____ between source and destination schema rows."',
+      options: [
+        { id: 'A', text: 'discrepancy' },
+        { id: 'B', text: 'accordance' },
+        { id: 'C', text: 'cohesion' },
+        { id: 'D', text: 'compliment' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'discrepancy',
+      accepted_alternatives: ['discrepancy'],
+      hint: 'Bắt đầu bằng chữ "d". Mang nghĩa sự sai lệch, không nhất quán giữa 2 nguồn dữ liệu.',
+      explanation_rule: '"discrepancy between X and Y" là thuật ngữ chuẩn để chỉ sự sai lệch dữ liệu không mong muốn.'
+    }
+  },
+  {
+    id: 'vocab-b2-bottleneck',
+    section: 'vocabulary',
+    skill_id: 'collocation_bottleneck',
+    skill_name: 'Collocations with Bottleneck',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-bottleneck',
+      section: 'vocabulary',
+      skill_id: 'collocation_bottleneck',
+      skill_name: 'Collocations with Bottleneck',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'bottleneck',
+        part_of_speech: 'noun',
+        ipa: '/ˈbɑː.t̬əl.nek/',
+        pronunciation_tip: 'Trọng âm rơi vào âm đầu: BOT-tle-neck. Âm /t̬/ lướt nhẹ.',
+        meaning: 'điểm nghẽn, khâu thắt cổ chai làm chậm lại toàn bộ tiến độ hoặc lưu lượng của hệ thống',
+        collocation_pattern: 'identify / eliminate / encounter + a bottleneck',
+        example_general: 'Heavy road construction created a massive traffic bottleneck at the city entrance.',
+        example_workplace: 'Database disk I/O turned out to be the primary performance bottleneck under peak traffic.',
+        similar_word_comparison: {
+          word: 'obstacle',
+          difference: '"obstacle" là chướng ngại vật cản đường; "bottleneck" là đoạn hẹp làm thắt nghẽn dòng chảy của một quy trình rộng lớn.'
+        }
+      },
+      prompt: 'Which noun refers to a specific constraint that restricts the capacity or speed of an entire pipeline?\n"After profiling the application, our engineers identified the database disk write speed as the major ____."',
+      options: [
+        { id: 'A', text: 'bottleneck' },
+        { id: 'B', text: 'facilitator' },
+        { id: 'C', text: 'catalyst' },
+        { id: 'D', text: 'accelerator' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'bottleneck',
+      accepted_alternatives: ['bottleneck'],
+      hint: 'Khái niệm "điểm nghẽn cổ chai" cản trở hiệu năng hệ thống.',
+      explanation_rule: '"performance bottleneck" là cụm từ tiêu chuẩn mô tả điểm yếu làm chậm cả hệ thống.'
+    }
+  },
+  {
+    id: 'vocab-b2-feasibility',
+    section: 'vocabulary',
+    skill_id: 'collocation_feasibility',
+    skill_name: 'Collocations with Feasibility',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-feasibility',
+      section: 'vocabulary',
+      skill_id: 'collocation_feasibility',
+      skill_name: 'Collocations with Feasibility',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'feasibility',
+        part_of_speech: 'noun',
+        ipa: '/ˌfiː.zəˈbɪl.ə.t̬i/',
+        pronunciation_tip: 'Trọng âm rơi vào âm thứ ba: fee-zuh-BIL-i-ty. Âm đầu /fiː/ kéo dài.',
+        meaning: 'tính khả thi, mức độ thực tế và có thể làm được của một dự án hoặc giải pháp',
+        collocation_pattern: 'assess / conduct a feasibility study / technical feasibility',
+        example_general: 'We need to evaluate the practical feasibility of relocating to a larger office.',
+        example_workplace: 'Before committing to the blockchain migration, the architect conducted a technical feasibility assessment.',
+        similar_word_comparison: {
+          word: 'possibility',
+          difference: '"possibility" là khả năng có thể xảy ra ngẫu nhiên; "feasibility" là tính khả thi có thể triển khai thực tế bằng nguồn lực hiện có.'
+        }
+      },
+      prompt: 'Choose the noun that means the practical viability or doable nature of a technical proposal:\n"Our team conducted a spike sprint to assess the technical ____ of migrating to a serverless architecture."',
+      options: [
+        { id: 'A', text: 'feasibility' },
+        { id: 'B', text: 'futility' },
+        { id: 'C', text: 'arbitrariness' },
+        { id: 'D', text: 'hesitation' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'feasibility',
+      accepted_alternatives: ['feasibility'],
+      hint: 'Bắt đầu bằng chữ "f". Từ mang nghĩa tính khả thi thực tế.',
+      explanation_rule: '"technical feasibility" là thuật ngữ kỹ thuật phổ biến để đánh giá một giải pháp có khả thi thực hiện hay không.'
+    }
+  },
+  {
+    id: 'vocab-b2-tangible',
+    section: 'vocabulary',
+    skill_id: 'collocation_tangible',
+    skill_name: 'Collocations with Tangible',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-tangible',
+      section: 'vocabulary',
+      skill_id: 'collocation_tangible',
+      skill_name: 'Collocations with Tangible',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'tangible',
+        part_of_speech: 'adjective',
+        ipa: '/ˈtæn.dʒə.bəl/',
+        pronunciation_tip: 'Trọng âm rơi vào âm đầu: TAN-ji-ble. Chú ý âm /dʒ/ ở giữa.',
+        meaning: 'rõ ràng, có thể đo đếm hoặc nhìn thấy kết quả thực tế, không mơ hồ',
+        collocation_pattern: 'tangible benefits / results / progress / evidence',
+        example_general: 'Their efforts yielded tangible improvements in student reading scores.',
+        example_workplace: 'Adopting the new linter produced tangible reductions in pull request discussion cycles.',
+        similar_word_comparison: {
+          word: 'clear',
+          difference: '"clear" là rõ ràng dễ thấy; "tangible" đặc biệt chỉ kết quả có thể cân đo đong đếm và chứng minh bằng dữ liệu thực tế.'
+        }
+      },
+      prompt: 'Which adjective best completes the sentence to describe measurable, concrete progress?\n"Our automated testing initiative has already produced ____ improvements in overall build stability."',
+      options: [
+        { id: 'A', text: 'tangible' },
+        { id: 'B', text: 'hypothetical' },
+        { id: 'C', text: 'negligible' },
+        { id: 'D', text: 'abstract' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'tangible',
+      accepted_alternatives: ['tangible'],
+      hint: 'Từ mang nghĩa kết quả rõ rệt, có thể đo đạc cụ thể được.',
+      explanation_rule: '"tangible improvements" là collocation chuyên môn để chỉ những cải thiện có thể chứng minh bằng dữ liệu đo đạc thực tế.'
+    }
+  },
+
+  // --- ADDITIONAL READING ITEMS ---
+  {
+    id: 'read-b2-feature-flags-1',
+    section: 'reading',
+    skill_id: 'reading_continuous_delivery',
+    skill_name: 'Feature Flags & Decoupled Deployments',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-flags-1',
+      section: 'reading',
+      skill_id: 'reading_continuous_delivery',
+      skill_name: 'Feature Flags & Decoupled Deployments',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Decoupling Code Deployment from Feature Releases',
+        word_count: 130,
+        topic: 'Continuous Delivery Strategy',
+        text: 'Traditional software teams often treat code deployment and feature release as identical milestones. When a project is finished, the code is deployed directly to production and immediately exposed to every user simultaneously. In contrast, modern engineering organizations decouple deployment from release by leveraging feature toggles. Code is merged and deployed to production continuously in dormant, disabled states. Product teams can then dynamically activate features for specific cohorts, conduct percentage-based canary rollouts, or observe telemetry under real production traffic. Crucially, if unexpected latency or uncaught exceptions emerge, engineers can disable the toggle within seconds without initiating a high-risk emergency rollback. This operational autonomy transforms release cycles from nerve-wracking midnight events into routine daytime workflows.'
+      },
+      prompt: 'What is the primary operational advantage of feature flags described in the passage?',
+      options: [
+        { id: 'A', text: 'They eliminate the need to write automated unit tests before production deployment' },
+        { id: 'B', text: 'They allow teams to instantly disable malfunctioning features without rolling back code' },
+        { id: 'C', text: 'They prevent multiple engineers from working on the same repository concurrently' },
+        { id: 'D', text: 'They force all feature releases to occur during scheduled weekend maintenance windows' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'They allow teams to instantly disable malfunctioning features without rolling back code',
+      accepted_alternatives: ['B'],
+      hint: 'Đọc kỹ câu: "if unexpected latency or uncaught exceptions emerge, engineers can disable the toggle within seconds without initiating a high-risk emergency rollback."',
+      explanation_rule: 'Đoạn văn nhấn mạnh khả năng tắt tính năng ngay lập tức thông qua toggle khi gặp sự cố mà không cần quy trình rollback khẩn cấp nguy hiểm.'
+    }
+  },
+  {
+    id: 'read-b2-on-call-culture-1',
+    section: 'reading',
+    skill_id: 'reading_incident_retrospectives',
+    skill_name: 'Blameless Post-Mortems & On-Call Health',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-oncall-1',
+      section: 'reading',
+      skill_id: 'reading_incident_retrospectives',
+      skill_name: 'Blameless Post-Mortems & On-Call Health',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'The Philosophy of Blameless Post-Mortems',
+        word_count: 125,
+        topic: 'Site Reliability Engineering',
+        text: 'When production outages occur, organizational instinct often leans toward locating an individual to hold accountable. However, resilient engineering cultures operate on the premise that human error is inevitable; catastrophic failure indicates systemic weakness in safeguards rather than individual negligence. In a blameless post-mortem, teams examine the sequence of events without attributing fault. Instead of asking "Who pushed the faulty migration?", investigators examine: "Why did our staging environment fail to replicate production state?", "Why did the deployment pipeline permit unverified configuration values?", and "How can our telemetry alert responders faster?" When engineers trust that honesty will not invite punishment, they candidly disclose subtle anomalies, allowing the organization to build systemic resilience that permanently prevents recurrence.'
+      },
+      prompt: 'Why do resilient organizations conduct post-mortems without assigning personal blame?',
+      options: [
+        { id: 'A', text: 'Because engineers who make mistakes are immediately reassigned to non-critical projects' },
+        { id: 'B', text: 'Because focusing on systemic safeguards encourages transparent disclosure and prevents future incidents' },
+        { id: 'C', text: 'Because outages are usually caused by external cloud vendors rather than internal code' },
+        { id: 'D', text: 'Because blameless post-mortems reduce the overall time spent monitoring telemetry dashboards' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'Because focusing on systemic safeguards encourages transparent disclosure and prevents future incidents',
+      accepted_alternatives: ['B'],
+      hint: 'Nhìn vào câu cuối: "When engineers trust that honesty will not invite punishment, they candidly disclose subtle anomalies, allowing the organization to build systemic resilience..."',
+      explanation_rule: 'Trọng tâm của văn hoá blameless là tập trung cải thiện hệ thống phòng vệ và khuyến khích chia sẻ trung thực để ngăn ngừa lỗi tái diễn.'
+    }
+  },
+
+  // --- ADDITIONAL WRITING ITEMS ---
+  {
+    id: 'write-b2-incident-postmortem-1',
+    section: 'writing',
+    skill_id: 'workplace_incident_update',
+    skill_name: 'Asynchronous Incident Announcement',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-inc-1',
+      section: 'writing',
+      skill_id: 'workplace_incident_update',
+      skill_name: 'Asynchronous Incident Announcement',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Khi thông báo sự cố trong kênh chung của công ty (#outages / Slack), thông điệp cần nêu rõ: 1) dịch vụ bị ảnh hưởng, 2) phạm vi tác động đến người dùng, và 3) hành động nhóm đang tiến hành.',
+      prompt: 'Write 2 to 3 professional sentences notifying cross-functional stakeholders that the search API is experiencing high latency, confirming that core data is safe, and stating when the next update will be provided.',
+      hint: 'Có thể mở đầu bằng: "We are currently observing elevated latency on...", khẳng định: "Please note that database integrity remains unaffected", và kết thúc: "Our next status update will follow at..."',
+      explanation_rule: 'Thông báo sự cố cần trung thực, điềm tĩnh, nêu rõ phạm vi và cam kết thời điểm cập nhật kế tiếp.'
+    }
+  },
+  {
+    id: 'write-b2-proposal-note-1',
+    section: 'writing',
+    skill_id: 'workplace_proposal_note',
+    skill_name: 'Constructive Architecture Proposal',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-prop-1',
+      section: 'writing',
+      skill_id: 'workplace_proposal_note',
+      skill_name: 'Constructive Architecture Proposal',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Khi đề xuất giải pháp kỹ thuật mới cho đồng nghiệp hoặc tech lead, hãy nêu ngắn gọn: 1) vấn đề hiện tại, 2) đề xuất thay đổi, và 3) lợi ích cụ thể mang lại.',
+      prompt: 'Write 2 to 3 sentences proposing to replace manual regression testing with automated Playwright end-to-end tests to save developer time before sprint releases.',
+      hint: 'Sử dụng các cụm từ chuyên nghiệp: "I propose we adopt...", "This would streamline our QA cycle...", "Consequently, we can reduce release bottlenecks."',
+      explanation_rule: 'Đề xuất kỹ thuật cần mạch lạc, nêu rõ lý do và lợi ích định lượng thay vì chỉ đưa ra ý kiến cá nhân.'
+    }
+  },
+
+  // --- ADDITIONAL EXTENSIVE VOCABULARY ITEMS ---
+  {
+    id: 'vocab-b2-bottleneck',
+    section: 'vocabulary',
+    skill_id: 'collocation_bottleneck',
+    skill_name: 'Collocations with Bottleneck',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-bottleneck',
+      section: 'vocabulary',
+      skill_id: 'collocation_bottleneck',
+      skill_name: 'Collocations with Bottleneck',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'bottleneck',
+        part_of_speech: 'noun',
+        ipa: '/ˈbɒtlnek/',
+        pronunciation_tip: 'Trọng âm rơi vào âm tiết đầu tiên: BOT-tle-neck.',
+        meaning: 'điểm nghẽn, khâu làm tắc nghẽn hoặc cản trở toàn bộ quy trình',
+        collocation_pattern: 'identify / eliminate / create a bottleneck in the pipeline',
+        example_general: 'Road construction during rush hour caused a major bottleneck on the highway.',
+        example_workplace: 'The manual security review has become the primary bottleneck in our CI/CD deployment pipeline.',
+        similar_word_comparison: {
+          word: 'obstacle',
+          difference: '"bottleneck" là sự chậm trễ phát sinh do giới hạn công suất ở một khâu; trong khi "obstacle" là chướng ngại vật cản trở hoàn toàn.'
+        }
+      },
+      prompt: 'Choose the most natural collocation to complete the sentence:\n"Our performance profiling session helped the DevOps team identify and eliminate the network I/O ____ that was delaying payment confirmations."',
+      options: [
+        { id: 'A', text: 'bottleneck' },
+        { id: 'B', text: 'stopwatch' },
+        { id: 'C', text: 'junction' },
+        { id: 'D', text: 'shortcut' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'bottleneck',
+      accepted_alternatives: ['bottleneck'],
+      hint: 'Từ nào chỉ điểm nghẽn hiệu năng gây chậm trễ quy trình xử lý?',
+      explanation_rule: 'Trong kỹ thuật và quản lý quy trình, "eliminate the bottleneck" là thuật ngữ tiêu chuẩn để chỉ việc gỡ bỏ điểm nghẽn hiệu năng.'
+    }
+  },
+  {
+    id: 'vocab-b2-leverage',
+    section: 'vocabulary',
+    skill_id: 'collocation_leverage',
+    skill_name: 'Collocations with Leverage',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-leverage',
+      section: 'vocabulary',
+      skill_id: 'collocation_leverage',
+      skill_name: 'Collocations with Leverage',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'leverage',
+        part_of_speech: 'verb',
+        ipa: '/ˈliːvərɪdʒ/',
+        pronunciation_tip: 'Âm đầu tiên là /ˈliːv/ hoặc /ˈlev/. Trọng âm rơi vào âm tiết thứ nhất: LEV-er-age.',
+        meaning: 'tận dụng tối đa một lợi thế, nguồn lực hoặc công nghệ sẵn có để đạt kết quả vượt trội',
+        collocation_pattern: 'leverage + expertise / technology / data / existing infrastructure',
+        example_general: 'She was able to leverage her background in graphic design to create appealing presentations.',
+        example_workplace: 'By leveraging edge caching, the team reduced average API latency by over forty percent.',
+        similar_word_comparison: {
+          word: 'utilize',
+          difference: '"utilize" chỉ đơn thuần là dùng/sử dụng một vật cho một mục đích; còn "leverage" hàm ý tận dụng một đòn bẩy để tạo ra tác động lớn hơn nhiều so với tài nguyên bỏ ra.'
+        }
+      },
+      prompt: 'Complete the sentence with the appropriate professional term:\n"To shorten time-to-market, our architects decided to ____ open-source libraries rather than reinventing authentication mechanisms from scratch."',
+      options: [
+        { id: 'A', text: 'leverage' },
+        { id: 'B', text: 'tolerate' },
+        { id: 'C', text: 'surrender' },
+        { id: 'D', text: 'withstand' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'leverage',
+      accepted_alternatives: ['leverage'],
+      hint: 'Từ mang nghĩa tận dụng triệt để tài nguyên có sẵn như một đòn bẩy.',
+      explanation_rule: '"leverage" là từ vựng rất phổ biến trong công nghệ và kinh doanh, mang nghĩa tận dụng đòn bẩy tài nguyên có sẵn để tối đa hóa hiệu quả.'
+    }
+  },
+  {
+    id: 'vocab-b2-resilient',
+    section: 'vocabulary',
+    skill_id: 'collocation_resilient',
+    skill_name: 'Collocations with Resilient',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-resilient',
+      section: 'vocabulary',
+      skill_id: 'collocation_resilient',
+      skill_name: 'Collocations with Resilient',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'resilient',
+        part_of_speech: 'adjective',
+        ipa: '/rɪˈzɪliənt/',
+        pronunciation_tip: 'Trọng âm rơi vào âm tiết thứ hai: re-ZIL-i-ent. Âm "s" đọc là /z/.',
+        meaning: 'kiên cường, có khả năng phục hồi nhanh chóng sau sự cố hoặc áp lực',
+        collocation_pattern: 'resilient architecture / resilient infrastructure / highly resilient system',
+        example_general: 'Children are often remarkably resilient when adapting to new surroundings.',
+        example_workplace: 'Designing resilient distributed services requires planning for network partition failures.',
+        similar_word_comparison: {
+          word: 'robust',
+          difference: '"robust" nhấn mạnh vào độ vững chắc, chịu lực không dễ hỏng; còn "resilient" nhấn mạnh vào khả năng đàn hồi và tự phục hồi nhanh sau khi gặp chấn động/sự cố.'
+        }
+      },
+      prompt: 'Select the best adjective:\n"Even during peak Black Friday traffic spikes, the payment gateway remained remarkably ____ thanks to auto-scaling container clusters."',
+      options: [
+        { id: 'A', text: 'resilient' },
+        { id: 'B', text: 'fragile' },
+        { id: 'C', text: 'hesitant' },
+        { id: 'D', text: 'provisional' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'resilient',
+      accepted_alternatives: ['resilient'],
+      hint: 'Hệ thống chịu tải tốt và phục hồi linh hoạt trước áp lực traffic cao được gọi là gì?',
+      explanation_rule: '"resilient" miêu tả hệ thống vững vàng, linh hoạt và phục hồi tốt trước áp lực hoặc lỗi phát sinh.'
+    }
+  },
+  {
+    id: 'vocab-b2-redundant',
+    section: 'vocabulary',
+    skill_id: 'collocation_redundant',
+    skill_name: 'Precision with Redundant',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-redundant',
+      section: 'vocabulary',
+      skill_id: 'collocation_redundant',
+      skill_name: 'Precision with Redundant',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'redundant',
+        part_of_speech: 'adjective',
+        ipa: '/rɪˈdʌndənt/',
+        pronunciation_tip: 'Trọng âm rơi vào âm tiết thứ hai: re-DUN-dant.',
+        meaning: '1) dư thừa, không cần thiết (trong văn phong); 2) dự phòng song song để chống hỏng hóc (trong kỹ thuật hệ thống)',
+        collocation_pattern: 'redundant power supplies / redundant data pipelines / render something redundant',
+        example_general: 'The editor removed several redundant paragraphs that merely repeated earlier points.',
+        example_workplace: 'Our cloud architecture uses redundant power backups and multi-region storage.',
+        similar_word_comparison: {
+          word: 'superfluous',
+          difference: '"superfluous" mang nghĩa tiêu cực là thừa thãi, không nên có; trong khi "redundant" trong kỹ thuật mạng/hệ thống lại là tính năng an toàn dự phòng rất cần thiết.'
+        }
+      },
+      prompt: 'Select the word that fits this infrastructure sentence:\n"To prevent single points of failure, the data center maintains ____ power generators and duplicate fiber optic connections."',
+      options: [
+        { id: 'A', text: 'redundant' },
+        { id: 'B', text: 'scarce' },
+        { id: 'C', text: 'superficial' },
+        { id: 'D', text: 'sluggish' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'redundant',
+      accepted_alternatives: ['redundant'],
+      hint: 'Trong thiết kế hạ tầng, thiết bị dự phòng song song được gọi là gì?',
+      explanation_rule: '"redundant" trong kỹ thuật viễn thông và máy chủ có nghĩa là dự phòng để tránh điểm lỗi đơn lẻ (single point of failure).'
+    }
+  },
+  {
+    id: 'vocab-b2-seamless',
+    section: 'vocabulary',
+    skill_id: 'collocation_seamless',
+    skill_name: 'Collocations with Seamless',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-seamless',
+      section: 'vocabulary',
+      skill_id: 'collocation_seamless',
+      skill_name: 'Collocations with Seamless',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'seamless',
+        part_of_speech: 'adjective',
+        ipa: '/ˈsiːmləs/',
+        pronunciation_tip: 'SEAM-less. Âm dài /iː/, đuôi /ləs/.',
+        meaning: 'liền mạch, trơn tru, không có sự gián đoạn hay vết nứt có thể nhận thấy',
+        collocation_pattern: 'seamless transition / seamless integration / seamless user experience',
+        example_general: 'The transition from the old schedule to the new one was completely seamless.',
+        example_workplace: 'Single Sign-On provides a seamless onboarding experience across all internal enterprise applications.',
+        similar_word_comparison: {
+          word: 'smooth',
+          difference: '"smooth" là từ thông dụng chỉ bề mặt hoặc tiến trình êm ả; "seamless" nhấn mạnh vào việc kết nối giữa hai hay nhiều hệ thống khác nhau mà người dùng không hề cảm thấy khoảng cách gián đoạn.'
+        }
+      },
+      prompt: 'Fill in the blank with the most fitting adjective:\n"The migration from our on-premise servers to the cloud was completely ____, causing zero disruption to end users during trading hours."',
+      options: [
+        { id: 'A', text: 'seamless' },
+        { id: 'B', text: 'abrupt' },
+        { id: 'C', text: 'clunky' },
+        { id: 'D', text: 'erratic' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'seamless',
+      accepted_alternatives: ['seamless'],
+      hint: 'Từ nào miêu tả sự chuyển đổi trơn tru, không gây gián đoạn cho người dùng?',
+      explanation_rule: '"seamless transition / seamless migration" là cụm từ chuẩn mực chỉ quá trình nâng cấp hệ thống liền mạch, không làm ngắt quãng trải nghiệm người dùng.'
+    }
+  },
+  {
+    id: 'vocab-b2-deprecate',
+    section: 'vocabulary',
+    skill_id: 'collocation_deprecate',
+    skill_name: 'Precision with Deprecate',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-deprecate',
+      section: 'vocabulary',
+      skill_id: 'collocation_deprecate',
+      skill_name: 'Precision with Deprecate',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'deprecate',
+        part_of_speech: 'verb',
+        ipa: '/ˈdeprəkeɪt/',
+        pronunciation_tip: 'DEP-re-cate. Trọng âm rơi vào âm tiết đầu tiên.',
+        meaning: 'đánh dấu một tính năng hoặc API là lỗi thời/không khuyến khích dùng nữa trước khi chính thức loại bỏ',
+        collocation_pattern: 'deprecate an endpoint / deprecated feature / schedule for deprecation',
+        example_general: 'He tended to deprecate his own accomplishments, attributing his success strictly to luck.',
+        example_workplace: 'The engineering team published a migration guide three months before deprecating the legacy v1 REST API.',
+        similar_word_comparison: {
+          word: 'obsolete',
+          difference: '"obsolete" là tính từ chỉ cái đã lỗi thời hẳn; còn "deprecate" là động từ hành động của nhà phát triển nhằm thông báo tính năng đang trong lộ trình ngừng hỗ trợ.'
+        }
+      },
+      prompt: 'Choose the appropriate technical term:\n"Before deleting the legacy authentication endpoint entirely, we must ____ it and log warning headers for developers still calling it."',
+      options: [
+        { id: 'A', text: 'deprecate' },
+        { id: 'B', text: 'accelerate' },
+        { id: 'C', text: 'authenticate' },
+        { id: 'D', text: 'replicate' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'deprecate',
+      accepted_alternatives: ['deprecate'],
+      hint: 'Thuật ngữ phần mềm để chỉ hành động đánh dấu một API là sắp ngừng hỗ trợ.',
+      explanation_rule: '"deprecate" là hành động thông báo tính năng phần mềm sẽ không còn được hỗ trợ trong phiên bản tương lai.'
+    }
+  },
+
+  // --- ADDITIONAL EXTENSIVE READING PASSAGES ---
+  {
+    id: 'read-b2-incident-postmortem',
+    section: 'reading',
+    skill_id: 'reading_incident_analysis',
+    skill_name: 'Incident Analysis & Cause Identification',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-incident-1',
+      section: 'reading',
+      skill_id: 'reading_incident_analysis',
+      skill_name: 'Incident Analysis & Cause Identification',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Anatomy of an Outage: Root Cause Transparency',
+        word_count: 135,
+        topic: 'Engineering Reliability & Blameless Culture',
+        text: 'At 14:15 UTC yesterday, our primary billing service experienced a 35-minute partial outage affecting international transactions. The root cause was traced back to a configuration typo in an environment variable deployed during routine maintenance. Because the validation script only verified database connection strings rather than token expiration formats, the invalid parameter went unnoticed until background billing workers began throwing unhandled exceptions. Rather than assigning blame to the junior engineer who pushed the commit, our team adheres strictly to a blameless post-mortem philosophy. When catastrophic failures occur, progressive organizations recognize that human error is merely a symptom of inadequate tooling and deficient safety barriers. Moving forward, the infrastructure squad will implement automated staging dry-runs and semantic config validation to ensure such regressions are caught before reaching production.'
+      },
+      prompt: 'According to the passage, why did the organization adopt a blameless post-mortem culture?',
+      options: [
+        { id: 'A', text: 'Because junior engineers should never be allowed to push code to production' },
+        { id: 'B', text: 'Because human mistakes point to systemic weaknesses in automated safety barriers' },
+        { id: 'C', text: 'Because international transactions are inherently prone to unhandled network exceptions' },
+        { id: 'D', text: 'Because configuration typos can be safely ignored during routine maintenance' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'Because human mistakes point to systemic weaknesses in automated safety barriers',
+      accepted_alternatives: ['B'],
+      hint: 'Đọc kỹ câu: "progressive organizations recognize that human error is merely a symptom of inadequate tooling and deficient safety barriers".',
+      explanation_rule: 'Đoạn văn nêu rõ lỗi con người là triệu chứng của việc thiếu công cụ và rào chắn an toàn hệ thống (deficient safety barriers), do đó cần sửa quy trình hơn là quy trách nhiệm cá nhân.'
+    }
+  },
+  {
+    id: 'read-b2-remote-async',
+    section: 'reading',
+    skill_id: 'reading_remote_culture',
+    skill_name: 'Evaluating Asynchronous Communication Nuance',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-remote-1',
+      section: 'reading',
+      skill_id: 'reading_remote_culture',
+      skill_name: 'Evaluating Asynchronous Communication Nuance',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'The Asynchronous Advantage in Distributed Engineering',
+        word_count: 140,
+        topic: 'Modern Remote Work Practices',
+        text: 'Synchronous meetings were once considered the gold standard of corporate collaboration. However, for globally distributed software teams spanning multiple time zones, back-to-back video calls frequently fragment deep work hours and drain cognitive energy. Effective distributed companies have shifted their default workflow toward asynchronous written documentation. Instead of calling an impromptu brainstorm, engineers author succinct Request for Comments (RFC) proposals outlining technical tradeoffs, API schemas, and architectural consequences. Teammates then contribute feedback on their own schedules over a 48-hour window. This deliberate delay not only accommodates non-overlapping working hours, but also yields significantly higher quality critique. When collaborators are afforded time to test hypotheses and verify facts before responding, discussions become grounded in empirical evidence rather than whoever speaks the loudest in the meeting room.'
+      },
+      prompt: 'What primary benefit of asynchronous RFC proposals does the author highlight?',
+      options: [
+        { id: 'A', text: 'They eliminate the need for written API schemas and architectural documents' },
+        { id: 'B', text: 'They allow collaborators sufficient time to reflect and provide fact-grounded critiques' },
+        { id: 'C', text: 'They ensure that decisions are finalized within a couple of minutes' },
+        { id: 'D', text: 'They require all engineers to work simultaneously within the same time zone' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'They allow collaborators sufficient time to reflect and provide fact-grounded critiques',
+      accepted_alternatives: ['B'],
+      hint: 'Xem xét câu kết luận: "When collaborators are afforded time to test hypotheses and verify facts before responding, discussions become grounded in empirical evidence..."',
+      explanation_rule: 'Tác giả nhấn mạnh việc giao tiếp không đồng bộ cho phép người tham gia có đủ thời gian suy ngẫm, kiểm chứng giả thuyết trước khi đưa ra phản hồi có căn cứ.'
+    }
+  },
+  {
+    id: 'read-b2-observability',
+    section: 'reading',
+    skill_id: 'reading_observability_concepts',
+    skill_name: 'Interpreting Technical System Concepts',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-obs-1',
+      section: 'reading',
+      skill_id: 'reading_observability_concepts',
+      skill_name: 'Interpreting Technical System Concepts',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Beyond Basic Monitoring: The Rise of Observability',
+        word_count: 132,
+        topic: 'Cloud Infrastructure & Telemetry',
+        text: 'Traditional system monitoring answers a simple binary question: is the service currently working or broken? Operators typically configure fixed thresholds—such as CPU utilization exceeding 80% or memory usage crossing 90%—to trigger automated pager alerts. In complex microservices architectures, however, catastrophic degradations often manifest without breaching any individual threshold. A cascading distributed deadlock or partial database thread starvation can slow requests to a crawl while server metrics appear deceptively healthy. Observability addresses this limitation by synthesizing three distinct telemetry pillars: metrics, structured logs, and distributed traces. By following a single user request as it traverses dozens of decoupled services, site reliability engineers can deduce internal system states purely from external outputs. Observability is not merely alerting on known failure modes; it is understanding unfamiliar emergent behaviors.'
+      },
+      prompt: 'Why are traditional threshold alerts often insufficient in complex microservice architectures?',
+      options: [
+        { id: 'A', text: 'Because servers never consume more than 80% CPU during real-world traffic' },
+        { id: 'B', text: 'Because severe degradations can happen across distributed services without triggering fixed thresholds' },
+        { id: 'C', text: 'Because structured logs take up too much disk space in cloud clusters' },
+        { id: 'D', text: 'Because microservices do not require site reliability engineers' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'Because severe degradations can happen across distributed services without triggering fixed thresholds',
+      accepted_alternatives: ['B'],
+      hint: 'Đoạn văn nêu: "In complex microservices architectures, however, catastrophic degradations often manifest without breaching any individual threshold."',
+      explanation_rule: 'Đoạn văn giải thích rõ rằng trong các hệ thống microservices phức tạp, sự cố nghiêm trọng có thể xảy ra do tắc nghẽn phân tán mà không làm vượt qua các ngưỡng cảnh báo tài nguyên cố định.'
+    }
+  },
+
+  // --- ADDITIONAL WRITING PROMPTS ---
+  {
+    id: 'write-b2-incident-postmortem-summary',
+    section: 'writing',
+    skill_id: 'workplace_incident_summary',
+    skill_name: 'Executive Incident Summary',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-inc-summary-1',
+      section: 'writing',
+      skill_id: 'workplace_incident_summary',
+      skill_name: 'Executive Incident Summary',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Trong báo cáo gửi ban lãnh đạo sau sự cố, tóm tắt sự cố cần ngắn gọn 2-3 câu: Nêu thời gian và dịch vụ bị ảnh hưởng, nguyên nhân cốt lõi và biện pháp khắc phục đã triển khai.',
+      prompt: 'Write 2 to 3 sentences summarizing a 20-minute database outage for executive stakeholders. Mention that the issue was identified, the service was restored via replica failover, and a fix was deployed to prevent recurrence.',
+      hint: 'Gợi ý: "Earlier today, our primary database encountered a 20-minute outage affecting user logins. The on-call team successfully restored service by initiating replica failover, and preventative measures have already been deployed."',
+      explanation_rule: 'Tập trung vào thì quá khứ cho diễn biến sự cố (encountered, initiated) và Present Perfect cho kết quả hiện tại (have deployed).'
+    }
+  },
+  {
+    id: 'write-b2-peer-kudos-note',
+    section: 'writing',
+    skill_id: 'workplace_peer_feedback',
+    skill_name: 'Constructive Peer Recognition',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-kudos-1',
+      section: 'writing',
+      skill_id: 'workplace_peer_feedback',
+      skill_name: 'Constructive Peer Recognition',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Khen ngợi và ghi nhận đóng góp của đồng nghiệp trong kênh chung (Slack #shoutouts hoặc performance review) giúp gắn kết đội ngũ. Nêu cụ thể hành động và tác động tích cực mà họ tạo ra.',
+      prompt: 'Write 2 to 3 sentences thanking a colleague for quickly troubleshooting an unexpected deployment bug right before the sprint deadline.',
+      hint: 'Gợi ý: "Huge shoutout to Alex for jumping in to troubleshoot our deployment bug right before the deadline. His quick action helped us deliver the release on schedule with zero customer disruption."',
+      explanation_rule: 'Sử dụng ngôn ngữ tích cực, tôn vinh kỹ năng giải quyết vấn đề và nhấn mạnh giá trị mang lại cho toàn đội.'
+    }
   }
 ];
+

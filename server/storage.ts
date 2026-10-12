@@ -13,8 +13,10 @@ import {
   DiagnosticReport,
   PersonalizedStudyPlan
 } from '../src/types/learning.js';
+import { UserAccount } from './authTypes.js';
 
-interface DatabaseSchema {
+export interface UserLearningData {
+  account: UserAccount;
   profile: UserProfile;
   skills: LearnerSkillState[];
   vocabulary: VocabularyItem[];
@@ -27,7 +29,12 @@ interface DatabaseSchema {
   studyPlan?: PersonalizedStudyPlan;
 }
 
-const DEFAULT_PROFILE: UserProfile = {
+export interface MultiUserDatabaseSchema {
+  version: number;
+  users: Record<string, UserLearningData>;
+}
+
+export const DEFAULT_PROFILE: UserProfile = {
   id: 'learner-primary',
   name: 'Learner',
   current_level: 'B2',
@@ -49,7 +56,7 @@ const DEFAULT_PROFILE: UserProfile = {
   updated_at: new Date().toISOString()
 };
 
-const INITIAL_SKILLS: LearnerSkillState[] = [
+export const INITIAL_SKILLS: LearnerSkillState[] = [
   {
     skill_id: 'past_simple_vs_past_perfect',
     skill_name: 'Past Simple vs. Past Perfect',
@@ -96,22 +103,22 @@ const INITIAL_SKILLS: LearnerSkillState[] = [
   }
 ];
 
-const INITIAL_VOCABULARY: VocabularyItem[] = [
+export const INITIAL_VOCABULARY: VocabularyItem[] = [
   {
     id: 'vocab-1',
     word: 'mitigate',
     part_of_speech: 'verb',
-    ipa: '/ˈmɪtɪɡeɪt/',
-    pronunciation_tip: 'Trọng âm rơi vào âm tiết đầu tiên: MIT-i-gate.',
-    meaning: 'giảm nhẹ mức độ nghiêm trọng hoặc tác động tiêu cực của một rủi ro/thiệt hại',
-    collocation_pattern: 'mitigate + risk / impact / damage / vulnerability',
-    example_general: 'Planting trees along the river helped mitigate soil erosion.',
-    example_workplace: 'Implementing rate limiting will mitigate the risk of server outages.',
+    ipa: '/ˈmɪt.ɪ.ɡeɪt/',
+    pronunciation_tip: 'Nhấn trọng âm vào âm đầu: MIT-i-gate; âm cuối bật /t/ rõ ràng.',
+    meaning: 'làm giảm bớt mức độ nghiêm trọng, đau đớn hoặc rủi ro của một vấn đề',
+    collocation_pattern: 'mitigate + risk / impact / circumstances / damage',
+    example_general: 'Soil conservation practices help mitigate the severity of flooding.',
+    example_workplace: 'We added fallback servers to mitigate the risk of downtime during database migration.',
     similar_word_comparison: {
-      word: 'minimize',
-      difference: 'mitigate tập trung vào giảm nhẹ hậu quả; minimize tập trung vào giảm số lượng/kích cỡ tối thiểu.'
+      word: 'alleviate',
+      difference: 'alleviate thường dùng cho nỗi đau, triệu chứng bệnh; mitigate thường dùng cho rủi ro, tổn thất hoặc thiệt hại.'
     },
-    review_stage: 3,
+    review_stage: 2,
     next_review_at: new Date(Date.now() + 86400000 * 2).toISOString(),
     first_seen_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     last_reviewed_at: new Date().toISOString(),
@@ -141,11 +148,13 @@ const INITIAL_VOCABULARY: VocabularyItem[] = [
   }
 ];
 
-class MemoryStore {
+export class MultiUserMemoryStore {
   private dbPath: string;
-  private memoryData: DatabaseSchema;
+  private users: Map<string, UserLearningData> = new Map();
+  private isPersisting = false;
+  private hasPendingWrite = false;
 
-  constructor() {
+  constructor(customPath?: string) {
     const dataDir = path.resolve(process.cwd(), 'data');
     if (!fs.existsSync(dataDir)) {
       try {
@@ -154,77 +163,183 @@ class MemoryStore {
         console.error('Failed to create data directory:', err);
       }
     }
-    this.dbPath = path.join(dataDir, 'db.json');
-    this.memoryData = this.loadFromDisk();
+    this.dbPath = customPath || path.join(dataDir, 'db.json');
+    this.loadFromDisk();
   }
 
-  private loadFromDisk(): DatabaseSchema {
+  private loadFromDisk() {
     try {
       if (fs.existsSync(this.dbPath)) {
         const raw = fs.readFileSync(this.dbPath, 'utf-8');
         const parsed = JSON.parse(raw);
-        return {
-          profile: parsed.profile || DEFAULT_PROFILE,
-          skills: parsed.skills || INITIAL_SKILLS,
-          vocabulary: parsed.vocabulary || INITIAL_VOCABULARY,
-          attempts: parsed.attempts || [],
-          lessons: parsed.lessons || [],
-          summaries: parsed.summaries || [],
-          discoveryState: parsed.discoveryState,
-          diagnosticSession: parsed.diagnosticSession,
-          diagnosticReports: parsed.diagnosticReports || [],
-          studyPlan: parsed.studyPlan
-        };
+
+        // Check if old single-user schema or new multi-user schema
+        if (parsed.version && parsed.users) {
+          // New multi-user schema
+          for (const [userId, uData] of Object.entries(parsed.users as Record<string, UserLearningData>)) {
+            this.users.set(userId, uData);
+          }
+        } else if (parsed.profile) {
+          // Backward-compatible migration from existing single-user db.json!
+          const primaryId = parsed.profile.id || 'learner-primary';
+          const migratedUser: UserLearningData = {
+            account: {
+              id: primaryId,
+              email: 'primary@learner.local',
+              name: parsed.profile.name || 'Primary Learner',
+              authProvider: 'guest',
+              createdAt: parsed.profile.created_at || new Date().toISOString(),
+              lastLoginAt: new Date().toISOString()
+            },
+            profile: parsed.profile || { ...DEFAULT_PROFILE },
+            skills: parsed.skills || [...INITIAL_SKILLS],
+            vocabulary: parsed.vocabulary || [...INITIAL_VOCABULARY],
+            attempts: parsed.attempts || [],
+            lessons: parsed.lessons || [],
+            summaries: parsed.summaries || [],
+            discoveryState: parsed.discoveryState,
+            diagnosticSession: parsed.diagnosticSession,
+            diagnosticReports: parsed.diagnosticReports || [],
+            studyPlan: parsed.studyPlan
+          };
+          this.users.set(primaryId, migratedUser);
+          console.log(`[Storage] Seamlessly migrated existing user data for '${primaryId}'.`);
+          this.persistAtomic();
+        }
       }
     } catch (err) {
-      console.warn('Error reading db.json, initializing fresh store:', err);
+      console.warn('[Storage] Error reading db.json, starting fresh memory:', err);
     }
-
-    return {
-      profile: { ...DEFAULT_PROFILE },
-      skills: [...INITIAL_SKILLS],
-      vocabulary: [...INITIAL_VOCABULARY],
-      attempts: [],
-      lessons: [],
-      summaries: [],
-      diagnosticReports: []
-    };
   }
 
-  private persist() {
+  /**
+   * Safe atomic write: writes to temporary file then renames to avoid partial corruption on crash
+   */
+  private persistAtomic() {
+    if (this.isPersisting) {
+      this.hasPendingWrite = true;
+      return;
+    }
+
+    this.isPersisting = true;
     try {
-      fs.writeFileSync(this.dbPath, JSON.stringify(this.memoryData, null, 2), 'utf-8');
+      const dump: MultiUserDatabaseSchema = {
+        version: 2,
+        users: Object.fromEntries(this.users)
+      };
+      const tmpPath = `${this.dbPath}.tmp.${Date.now()}`;
+      fs.writeFileSync(tmpPath, JSON.stringify(dump, null, 2), 'utf-8');
+      fs.renameSync(tmpPath, this.dbPath);
     } catch (err) {
-      console.error('Error persisting database:', err);
+      console.error('[Storage] Error persisting database atomically:', err);
+    } finally {
+      this.isPersisting = false;
+      if (this.hasPendingWrite) {
+        this.hasPendingWrite = false;
+        this.persistAtomic();
+      }
     }
   }
 
-  public getProfile(): UserProfile {
-    return { ...this.memoryData.profile };
+  public getDefaultUserId(): string {
+    const firstKey = this.users.keys().next().value;
+    return firstKey || 'learner-primary';
   }
 
-  public updateProfile(updates: Partial<UserProfile>): UserProfile {
-    this.memoryData.profile = {
-      ...this.memoryData.profile,
+  public resolveUserId(userId?: string): string {
+    if (typeof userId === 'string' && userId.trim()) {
+      return userId.trim();
+    }
+    return this.getDefaultUserId();
+  }
+
+  public getOrCreateUser(account: UserAccount): UserLearningData {
+    let userData = this.users.get(account.id);
+    if (!userData) {
+      userData = {
+        account,
+        profile: {
+          ...DEFAULT_PROFILE,
+          id: account.id,
+          name: account.name || DEFAULT_PROFILE.name,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        skills: JSON.parse(JSON.stringify(INITIAL_SKILLS)),
+        vocabulary: JSON.parse(JSON.stringify(INITIAL_VOCABULARY)),
+        attempts: [],
+        lessons: [],
+        summaries: [],
+        diagnosticReports: []
+      };
+      this.users.set(account.id, userData);
+      this.persistAtomic();
+    } else {
+      userData.account.lastLoginAt = new Date().toISOString();
+      if (account.name && account.name !== userData.account.name) {
+        userData.account.name = account.name;
+      }
+      if (account.picture && account.picture !== userData.account.picture) {
+        userData.account.picture = account.picture;
+      }
+    }
+    return userData;
+  }
+
+  private ensureUser(userId?: string): UserLearningData {
+    const id = this.resolveUserId(userId);
+    let u = this.users.get(id);
+    if (!u) {
+      const defaultAccount: UserAccount = {
+        id,
+        email: `${id}@learner.local`,
+        name: 'Learner',
+        authProvider: id.startsWith('google_') ? 'google' : 'guest',
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString()
+      };
+      u = this.getOrCreateUser(defaultAccount);
+    }
+    return u;
+  }
+
+  // Profile
+  public getProfile(userId?: string): UserProfile {
+    const u = this.ensureUser(userId);
+    return { ...u.profile };
+  }
+
+  public updateProfile(userId: string | undefined, updates: Partial<UserProfile>): UserProfile {
+    const u = this.ensureUser(userId);
+    const resolvedId = u.account.id;
+
+    u.profile = {
+      ...u.profile,
       ...updates,
+      id: resolvedId,
       updated_at: new Date().toISOString()
     };
-    this.persist();
-    return this.memoryData.profile;
+    this.persistAtomic();
+    return { ...u.profile };
   }
 
-  public getSkills(): LearnerSkillState[] {
-    return [...this.memoryData.skills];
+  // Skills
+  public getSkills(userId?: string): LearnerSkillState[] {
+    const u = this.ensureUser(userId);
+    return [...u.skills];
   }
 
   public updateSkillState(
+    userId: string | undefined,
     skillId: string,
     skillName: string,
     category: string,
     isCorrect: boolean,
     errorTag?: string
   ): LearnerSkillState {
-    let skill = this.memoryData.skills.find(s => s.skill_id === skillId);
+    const u = this.ensureUser(userId);
+
+    let skill = u.skills.find(s => s.skill_id === skillId);
     if (!skill) {
       skill = {
         skill_id: skillId,
@@ -237,7 +352,7 @@ class MemoryStore {
         next_review_at: new Date(Date.now() + 86400000).toISOString(),
         recurring_errors: errorTag ? [errorTag] : []
       };
-      this.memoryData.skills.push(skill);
+      u.skills.push(skill);
     } else {
       skill.total_attempts += 1;
       const prevCorrect = Math.round(skill.accuracy_rate * (skill.total_attempts - 1));
@@ -262,28 +377,39 @@ class MemoryStore {
         }
       }
     }
-    this.persist();
-    return skill;
+
+    this.persistAtomic();
+    return { ...skill };
   }
 
-  public getVocabulary(): VocabularyItem[] {
-    return [...this.memoryData.vocabulary];
+  // Vocabulary
+  public getVocabulary(userId?: string): VocabularyItem[] {
+    const u = this.ensureUser(userId);
+    return [...u.vocabulary];
   }
 
-  public saveVocabularyItem(item: Partial<VocabularyItem> & { word: string }): VocabularyItem {
-    const existingIndex = this.memoryData.vocabulary.findIndex(
-      v => v.word.toLowerCase() === item.word.toLowerCase()
-    );
+  public saveVocabularyItem(arg1: any, arg2?: any): VocabularyItem {
+    let targetUserId: string | undefined;
+    let item: Partial<VocabularyItem> & { word: string };
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      item = arg2;
+    } else {
+      targetUserId = undefined;
+      item = arg1;
+    }
 
+    const u = this.ensureUser(targetUserId);
+    const existingIndex = u.vocabulary.findIndex(v => v.word.toLowerCase() === item.word.toLowerCase());
     if (existingIndex >= 0) {
-      const existing = this.memoryData.vocabulary[existingIndex];
+      const existing = u.vocabulary[existingIndex];
       const updated: VocabularyItem = {
         ...existing,
         ...item,
         last_reviewed_at: new Date().toISOString()
       };
-      this.memoryData.vocabulary[existingIndex] = updated;
-      this.persist();
+      u.vocabulary[existingIndex] = updated;
+      this.persistAtomic();
       return updated;
     } else {
       const newItem: VocabularyItem = {
@@ -304,161 +430,256 @@ class MemoryStore {
         times_correct: 1,
         times_incorrect: 0
       };
-      this.memoryData.vocabulary.push(newItem);
-      this.persist();
+      u.vocabulary.push(newItem);
+      this.persistAtomic();
       return newItem;
     }
   }
 
-  public recordAttempt(attempt: Attempt): Attempt {
-    this.memoryData.attempts.push(attempt);
-    
-    // Update skill state accordingly
+  // Attempts
+  public recordAttempt(arg1: any, arg2?: any): Attempt {
+    let targetUserId: string | undefined;
+    let attempt: Attempt;
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      attempt = arg2;
+    } else {
+      targetUserId = undefined;
+      attempt = arg1;
+    }
+
+    const u = this.ensureUser(targetUserId);
+    u.attempts.push(attempt);
     const isCorrect = attempt.verdict === 'correct';
     const errorTag = attempt.evaluation.decisive_clue || (attempt.evaluation.error_tags && attempt.evaluation.error_tags[0]);
-    this.updateSkillState(
-      attempt.question_id,
-      attempt.skill_name,
-      attempt.section,
-      isCorrect,
-      errorTag
-    );
-
-    this.persist();
+    this.updateSkillState(u.account.id, attempt.question_id, attempt.skill_name, attempt.section, isCorrect, errorTag);
+    this.persistAtomic();
     return attempt;
   }
 
-  public getAttempts(): Attempt[] {
-    return [...this.memoryData.attempts];
+  public getAttempts(userId?: string): Attempt[] {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    return [...u.attempts];
   }
 
-  public getLessons(): LessonPlan[] {
-    return [...this.memoryData.lessons];
+  // Lessons
+  public getLessons(userId?: string): LessonPlan[] {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    return [...u.lessons];
   }
 
-  public saveLesson(lesson: LessonPlan): LessonPlan {
-    const idx = this.memoryData.lessons.findIndex(l => l.lesson_id === lesson.lesson_id);
-    if (idx >= 0) {
-      this.memoryData.lessons[idx] = lesson;
+  public saveLesson(arg1: any, arg2?: any): LessonPlan {
+    let targetUserId: string | undefined;
+    let lesson: LessonPlan;
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      lesson = arg2;
     } else {
-      this.memoryData.lessons.push(lesson);
+      targetUserId = undefined;
+      lesson = arg1;
     }
-    this.persist();
+
+    const u = this.ensureUser(targetUserId);
+    const idx = u.lessons.findIndex(l => l.lesson_id === lesson.lesson_id);
+    if (idx >= 0) {
+      u.lessons[idx] = lesson;
+    } else {
+      u.lessons.push(lesson);
+    }
+    this.persistAtomic();
     return lesson;
   }
 
-  public getSummaries(): DailySummary[] {
-    return [...this.memoryData.summaries];
+  public completeLesson(userId: string | undefined, lessonId: string): void {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    const target = u.lessons.find(l => l.lesson_id === lessonId);
+    if (target) {
+      target.status = 'completed';
+      this.persistAtomic();
+    }
   }
 
-  public saveSummary(summary: DailySummary): DailySummary {
-    const idx = this.memoryData.summaries.findIndex(s => s.lesson_id === summary.lesson_id);
-    if (idx >= 0) {
-      this.memoryData.summaries[idx] = summary;
+  // Summaries
+  public getSummaries(userId?: string): DailySummary[] {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    return [...u.summaries];
+  }
+
+  public saveSummary(arg1: any, arg2?: any): DailySummary {
+    let targetUserId: string | undefined;
+    let summary: DailySummary;
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      summary = arg2;
     } else {
-      this.memoryData.summaries.push(summary);
+      targetUserId = undefined;
+      summary = arg1;
     }
-    this.persist();
+
+    const u = this.ensureUser(targetUserId);
+    const idx = u.summaries.findIndex(s => s.lesson_id === summary.lesson_id);
+    if (idx >= 0) {
+      u.summaries[idx] = summary;
+    } else {
+      u.summaries.push(summary);
+    }
+    this.persistAtomic();
     return summary;
   }
 
-  // Conversational Discovery persistence
-  public getDiscoveryState(): DiscoveryState | null {
-    return this.memoryData.discoveryState || null;
+  // Discovery State
+  public getDiscoveryState(userId?: string): DiscoveryState | undefined {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    return u.discoveryState;
   }
 
-  public saveDiscoveryState(state: DiscoveryState): DiscoveryState {
-    this.memoryData.discoveryState = state;
-    this.persist();
+  public saveDiscoveryState(arg1: any, arg2?: any): DiscoveryState {
+    let targetUserId: string | undefined;
+    let state: DiscoveryState;
+
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      state = arg2;
+    } else {
+      targetUserId = undefined;
+      state = arg1;
+    }
+
+    const u = this.ensureUser(targetUserId);
+    u.discoveryState = state;
+    this.persistAtomic();
     return state;
   }
 
-  // Adaptive Diagnostic Session persistence
-  public getDiagnosticSession(): DiagnosticSession | null {
-    return this.memoryData.diagnosticSession || null;
+  // Diagnostic Session
+  public getDiagnosticSession(userId?: string): DiagnosticSession | undefined {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    return u.diagnosticSession;
   }
 
-  public saveDiagnosticSession(session: DiagnosticSession): DiagnosticSession {
-    this.memoryData.diagnosticSession = session;
-    this.persist();
+  public saveDiagnosticSession(arg1: any, arg2?: any): DiagnosticSession {
+    let targetUserId: string | undefined;
+    let session: DiagnosticSession;
+
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      session = arg2;
+    } else {
+      targetUserId = undefined;
+      session = arg1;
+    }
+
+    const u = this.ensureUser(targetUserId);
+    u.diagnosticSession = session;
+    this.persistAtomic();
     return session;
   }
 
-  public clearDiagnosticSession() {
-    delete this.memoryData.diagnosticSession;
-    this.persist();
+  public clearDiagnosticSession(userId?: string) {
+    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
+    delete u.diagnosticSession;
+    this.persistAtomic();
   }
 
   // Diagnostic Reports
-  public getDiagnosticReports(): DiagnosticReport[] {
-    return [...(this.memoryData.diagnosticReports || [])];
+  public getDiagnosticReports(userId?: string): DiagnosticReport[] {
+    const u = this.ensureUser(userId);
+    return [...u.diagnosticReports];
   }
 
-  public saveDiagnosticReport(report: DiagnosticReport): DiagnosticReport {
-    if (!this.memoryData.diagnosticReports) {
-      this.memoryData.diagnosticReports = [];
-    }
-    const idx = this.memoryData.diagnosticReports.findIndex(r => r.id === report.id);
-    if (idx >= 0) {
-      this.memoryData.diagnosticReports[idx] = report;
+  public saveDiagnosticReport(arg1: any, arg2?: any): DiagnosticReport {
+    let targetUserId: string | undefined;
+    let report: DiagnosticReport;
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      report = arg2;
     } else {
-      this.memoryData.diagnosticReports.push(report);
+      targetUserId = undefined;
+      report = arg1;
     }
-    this.persist();
+
+    const u = this.ensureUser(targetUserId);
+    const idx = u.diagnosticReports.findIndex(r => r.id === report.id);
+    if (idx >= 0) {
+      u.diagnosticReports[idx] = report;
+    } else {
+      u.diagnosticReports.push(report);
+    }
+    this.persistAtomic();
     return report;
   }
 
   // Study Plan
-  public getStudyPlan(): PersonalizedStudyPlan | null {
-    return this.memoryData.studyPlan || null;
+  public getStudyPlan(userId?: string): PersonalizedStudyPlan | null {
+    const u = this.ensureUser(userId);
+    return u.studyPlan || null;
   }
 
-  public saveStudyPlan(plan: PersonalizedStudyPlan): PersonalizedStudyPlan {
-    this.memoryData.studyPlan = plan;
-    this.persist();
+  public saveStudyPlan(arg1: any, arg2?: any): PersonalizedStudyPlan {
+    let targetUserId: string | undefined;
+    let plan: PersonalizedStudyPlan;
+    if (arg2 !== undefined) {
+      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
+      plan = arg2;
+    } else {
+      targetUserId = undefined;
+      plan = arg1;
+    }
+
+    const u = this.ensureUser(targetUserId);
+    u.studyPlan = plan;
+    this.persistAtomic();
     return plan;
   }
 
-  public exportAll(): LearningDataExport {
+  // Export / Import per user
+  public exportAll(userId?: string): LearningDataExport {
+    const u = this.ensureUser(userId);
     return {
-      profile: this.getProfile(),
-      skills: this.getSkills(),
-      vocabulary: this.getVocabulary(),
-      attempts: this.getAttempts(),
-      lessons: this.getLessons(),
-      summaries: this.getSummaries(),
-      discoveryState: this.memoryData.discoveryState,
-      diagnosticReports: this.memoryData.diagnosticReports,
-      studyPlan: this.memoryData.studyPlan,
+      profile: this.getProfile(u.account.id),
+      skills: this.getSkills(u.account.id),
+      vocabulary: this.getVocabulary(u.account.id),
+      attempts: this.getAttempts(u.account.id),
+      lessons: this.getLessons(u.account.id),
+      summaries: this.getSummaries(u.account.id),
+      discoveryState: u.discoveryState,
+      diagnosticReports: u.diagnosticReports || [],
+      studyPlan: u.studyPlan,
       exported_at: new Date().toISOString()
     };
   }
 
-  public importAll(data: Partial<LearningDataExport>) {
-    if (data.profile) this.memoryData.profile = { ...DEFAULT_PROFILE, ...data.profile };
-    if (Array.isArray(data.skills)) this.memoryData.skills = data.skills;
-    if (Array.isArray(data.vocabulary)) this.memoryData.vocabulary = data.vocabulary;
-    if (Array.isArray(data.attempts)) this.memoryData.attempts = data.attempts;
-    if (Array.isArray(data.lessons)) this.memoryData.lessons = data.lessons;
-    if (Array.isArray(data.summaries)) this.memoryData.summaries = data.summaries;
-    if (data.discoveryState) this.memoryData.discoveryState = data.discoveryState;
-    if (Array.isArray(data.diagnosticReports)) this.memoryData.diagnosticReports = data.diagnosticReports;
-    if (data.studyPlan) this.memoryData.studyPlan = data.studyPlan;
-    this.persist();
+  public importAll(userId: string | undefined, data: Partial<LearningDataExport>) {
+    const u = this.ensureUser(userId);
+
+    if (data.profile) u.profile = { ...DEFAULT_PROFILE, ...data.profile, id: u.account.id };
+    if (Array.isArray(data.skills)) u.skills = data.skills;
+    if (Array.isArray(data.vocabulary)) u.vocabulary = data.vocabulary;
+    if (Array.isArray(data.attempts)) u.attempts = data.attempts;
+    if (Array.isArray(data.lessons)) u.lessons = data.lessons;
+    if (Array.isArray(data.summaries)) u.summaries = data.summaries;
+    if (data.discoveryState) u.discoveryState = data.discoveryState;
+    if (Array.isArray(data.diagnosticReports)) u.diagnosticReports = data.diagnosticReports;
+    if (data.studyPlan) u.studyPlan = data.studyPlan;
+    this.persistAtomic();
   }
 
-  public clearAll() {
-    this.memoryData = {
-      profile: { ...DEFAULT_PROFILE, onboarding_completed: false },
-      skills: [],
-      vocabulary: [],
-      attempts: [],
-      lessons: [],
-      summaries: [],
-      diagnosticReports: []
-    };
-    this.persist();
+  public clearAll(userId?: string) {
+    const u = this.ensureUser(userId);
+    const resolvedId = u.account.id;
+
+    u.profile = { ...DEFAULT_PROFILE, id: resolvedId, onboarding_completed: false };
+    u.skills = JSON.parse(JSON.stringify(INITIAL_SKILLS));
+    u.vocabulary = JSON.parse(JSON.stringify(INITIAL_VOCABULARY));
+    u.attempts = [];
+    u.lessons = [];
+    u.summaries = [];
+    u.diagnosticReports = [];
+    delete u.discoveryState;
+    delete u.diagnosticSession;
+    delete u.studyPlan;
+    this.persistAtomic();
   }
 }
 
-export const store = new MemoryStore();
+export const store = new MultiUserMemoryStore();

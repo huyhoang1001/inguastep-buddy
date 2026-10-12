@@ -141,19 +141,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <span className="font-semibold text-slate-400 uppercase tracking-wider">Session Length</span>
               <strong className="text-indigo-300">{dailyMinutes} minutes / day</strong>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
               {[
-                { mins: 10, label: '10 mins', sub: 'Quick (4 Qs)' },
-                { mins: 20, label: '20 mins', sub: 'Standard (7 Qs)' },
-                { mins: 30, label: '30 mins', sub: 'Deep (12 Qs)' }
+                { mins: 10, label: '10m', sub: '8 Qs' },
+                { mins: 15, label: '15m', sub: '12 Qs' },
+                { mins: 20, label: '20m', sub: '15 Qs' },
+                { mins: 25, label: '25m', sub: '19 Qs' },
+                { mins: 30, label: '30m', sub: '23 Qs' },
+                { mins: 35, label: '35m', sub: '27 Qs' },
+                { mins: 45, label: '45m', sub: '34 Qs' }
               ].map(opt => (
                 <button
                   key={opt.mins}
+                  type="button"
                   onClick={() => setDailyMinutes(opt.mins)}
                   className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${
                     dailyMinutes === opt.mins
-                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
-                      : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600'
+                      ? 'bg-indigo-600 border-indigo-400 text-white font-bold shadow-md'
+                      : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-500'
                   }`}
                 >
                   <span className="text-xs font-bold">{opt.label}</span>
