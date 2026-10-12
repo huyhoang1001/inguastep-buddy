@@ -36,6 +36,14 @@ export interface UserProfile {
   feedback_style: FeedbackStyle;
   enable_audio_tips: boolean;
   onboarding_completed: boolean;
+  
+  // Extended conversational discovery fields
+  struggles?: string[];
+  timeline_target?: string;
+  audio_importance?: boolean;
+  preferred_topics?: string[];
+  confidence_in_level?: 'low' | 'moderate' | 'high';
+  
   created_at: string;
   updated_at: string;
 }
@@ -188,6 +196,146 @@ export interface TutorAssistantResponse {
   example_sentence?: string;
 }
 
+// ----------------------------------------------------
+// CONVERSATIONAL DISCOVERY TYPES
+// ----------------------------------------------------
+
+export interface DiscoveryMessage {
+  id: string;
+  sender: 'tutor' | 'learner';
+  text: string;
+  quickReplies?: string[];
+  dimension?: 'goal' | 'level' | 'struggles' | 'language' | 'time' | 'ratio' | 'correction' | 'audio' | 'timeline' | 'confirmation';
+  timestamp: string;
+}
+
+export interface DiscoveryState {
+  messages: DiscoveryMessage[];
+  currentDimensionIndex: number;
+  isConfirmed: boolean;
+  summary: string;
+  profileDraft: Partial<UserProfile>;
+  updatedAt: string;
+}
+
+// ----------------------------------------------------
+// ADAPTIVE DIAGNOSTIC ASSESSMENT TYPES
+// ----------------------------------------------------
+
+export type DiagnosticMode = 'quick' | 'standard' | 'comprehensive';
+
+export interface WritingRubricScore {
+  accuracy: number; // 1-5
+  vocabularyRange: number; // 1-5
+  sentenceComplexity: number; // 1-5
+  coherence: number; // 1-5
+  naturalness: number; // 1-5
+  taskCompletion: number; // 1-5
+  feedbackSummary: string;
+  correctedVersion: string;
+  keyCorrections: Array<{ original: string; corrected: string; reason: string }>;
+}
+
+export interface SkillProficiencyEstimate {
+  category: SectionType | 'speaking' | 'listening';
+  cefrRange: string; // e.g. "B1-B2", "B2", "C1", "Not Assessed"
+  confidence: 'low' | 'moderate' | 'high';
+  evidenceCount: number;
+  correctCount: number;
+  demonstratedStrengths: string[];
+  priorityWeaknesses: string[];
+  recurringErrors: string[];
+  unassessedSubskills: string[];
+}
+
+export interface DiagnosticItemAttempt {
+  id: string;
+  question: Question;
+  userAnswer: string;
+  verdict: Verdict;
+  evaluation: AnswerEvaluation;
+  writingRubric?: WritingRubricScore;
+  durationSeconds?: number;
+  timestamp: string;
+}
+
+export interface DiagnosticSession {
+  sessionId: string;
+  mode: DiagnosticMode;
+  status: 'in_progress' | 'paused' | 'completed';
+  currentIndex: number;
+  minQuestions: number;
+  maxQuestions: number;
+  history: DiagnosticItemAttempt[];
+  currentEstimates: {
+    grammar: SkillProficiencyEstimate;
+    vocabulary: SkillProficiencyEstimate;
+    reading: SkillProficiencyEstimate;
+    writing: SkillProficiencyEstimate;
+    speaking: SkillProficiencyEstimate;
+    listening: SkillProficiencyEstimate;
+  };
+  overallCEFR: string;
+  currentQuestion?: Question;
+  startedAt: string;
+  lastActiveAt: string;
+  completedAt?: string;
+}
+
+export interface DiagnosticReport {
+  id: string;
+  sessionId: string;
+  mode: DiagnosticMode;
+  completedAt: string;
+  overallCEFR: string;
+  overallConfidence: 'low' | 'moderate' | 'high';
+  overallSummary: string;
+  skillEstimates: {
+    grammar: SkillProficiencyEstimate;
+    vocabulary: SkillProficiencyEstimate;
+    reading: SkillProficiencyEstimate;
+    writing: SkillProficiencyEstimate;
+    speaking: SkillProficiencyEstimate;
+    listening: SkillProficiencyEstimate;
+  };
+  demonstratedStrengths: string[];
+  priorityWeaknesses: string[];
+  recurringErrors: string[];
+  totalQuestionsAnswered: number;
+  accuracyRate: number;
+}
+
+// ----------------------------------------------------
+// PERSONALIZED STUDY PLAN TYPES
+// ----------------------------------------------------
+
+export interface PrioritizedSkillPlan {
+  skillId: string;
+  skillName: string;
+  category: SectionType;
+  currentLevel: string;
+  targetLevel: string;
+  priority: 'high' | 'medium' | 'low';
+  rationale: string;
+}
+
+export interface PersonalizedStudyPlan {
+  id: string;
+  learnerId: string;
+  diagnosticReportId: string;
+  overallObjective: string;
+  diagnosticSummary: string;
+  prioritizedSkills: PrioritizedSkillPlan[];
+  shortTermMilestones: string[];
+  suggestedWeeklyRoutine: Array<{ day: string; focus: string; minutes: number }>;
+  dailyRoutineTemplate: Array<{ section: SectionType; title: string; minutes: number; target: string }>;
+  spacedReviewStrategy: string;
+  progressCheckIntervalDays: number;
+  learnerApprovalStatus: 'draft' | 'approved';
+  approvedAt?: string;
+  createdAt: string;
+}
+
 export interface LearningDataExport {
   profile: UserProfile;
   skills: LearnerSkillState[];
@@ -195,5 +343,8 @@ export interface LearningDataExport {
   attempts: Attempt[];
   lessons: LessonPlan[];
   summaries: DailySummary[];
+  discoveryState?: DiscoveryState;
+  diagnosticReports?: DiagnosticReport[];
+  studyPlan?: PersonalizedStudyPlan;
   exported_at: string;
 }

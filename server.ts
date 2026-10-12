@@ -5,7 +5,12 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { store } from './server/storage.js';
 import { aiService } from './server/aiService.js';
-import { Attempt } from './src/types/learning.js';
+import {
+  Attempt,
+  DiagnosticSession,
+  DiagnosticMode,
+  DiscoveryState
+} from './src/types/learning.js';
 
 dotenv.config();
 
@@ -56,7 +61,9 @@ app.get('/api/memory', (req: Request, res: Response) => {
     const attempts = store.getAttempts();
     const lessons = store.getLessons();
     const summaries = store.getSummaries();
-    res.json({ profile, skills, vocabulary, attempts, lessons, summaries });
+    const diagnosticReports = store.getDiagnosticReports();
+    const studyPlan = store.getStudyPlan();
+    res.json({ profile, skills, vocabulary, attempts, lessons, summaries, diagnosticReports, studyPlan });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -99,7 +106,431 @@ app.post('/api/vocabulary/save', (req: Request, res: Response) => {
   }
 });
 
-// Lesson generation & questions
+// =========================================================================
+// CONVERSATIONAL DISCOVERY ROUTES
+// =========================================================================
+
+app.get('/api/discovery', (req: Request, res: Response) => {
+  try {
+    const profile = store.getProfile();
+    let discoveryState = store.getDiscoveryState();
+
+    if (!discoveryState || discoveryState.messages.length === 0) {
+      const isVi = profile.explanation_language === 'vi';
+      discoveryState = {
+        messages: [
+          {
+            id: `msg-${Date.now()}`,
+            sender: 'tutor',
+            text: isVi
+              ? 'Xin chào! Mình là gia sư tiếng Anh cá nhân của bạn. Mình ở đây để giúp bạn tiến bộ qua các buổi học 1 câu hỏi tại một thời điểm, giải thích cặn kẽ và ghi nhớ dài hạn.\n\nĐể bắt đầu, mục tiêu học tiếng Anh lớn nhất của bạn lúc này là gì?'
+              : 'Hello! I am your personal adaptive English tutor. I will guide you with focused step-by-step questions, clear explanations, and long-term memory tracking.\n\nTo begin, what is your primary English learning goal right now?',
+            quickReplies: isVi
+              ? ['Giao tiếp công việc & Kỹ thuật', 'Giao tiếp đời sống tự nhiên', 'Viết báo cáo & Đọc tài liệu', 'Cân bằng cả hai']
+              : ['Workplace & Tech Communication', 'Natural Conversation', 'Reading & Technical Writing', 'Balanced Mix'],
+            dimension: 'goal',
+            timestamp: new Date().toISOString()
+          }
+        ],
+        currentDimensionIndex: 1,
+        isConfirmed: false,
+        summary: '',
+        profileDraft: { ...profile },
+        updatedAt: new Date().toISOString()
+      };
+      store.saveDiscoveryState(discoveryState);
+    }
+
+    res.json(discoveryState);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/discovery/message', async (req: Request, res: Response) => {
+  try {
+    const { message } = req.body;
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message cannot be empty' });
+    }
+
+    let discoveryState = store.getDiscoveryState();
+    const profile = store.getProfile();
+
+    if (!discoveryState) {
+      discoveryState = {
+        messages: [],
+        currentDimensionIndex: 0,
+        isConfirmed: false,
+        summary: '',
+        profileDraft: { ...profile },
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    // Add user message
+    const userMsg = {
+      id: `msg-user-${Date.now()}`,
+      sender: 'learner' as const,
+      text: message.trim(),
+      timestamp: new Date().toISOString()
+    };
+    discoveryState.messages.push(userMsg);
+
+    // Call AI turn handler
+    const result = await aiService.handleDiscoveryTurn(
+      discoveryState.messages,
+      message.trim(),
+      profile
+    );
+
+    // Add tutor reply
+    const tutorMsg = {
+      id: `msg-tutor-${Date.now()}`,
+      sender: 'tutor' as const,
+      text: result.tutorReply,
+      quickReplies: result.quickReplies,
+      dimension: result.dimension,
+      timestamp: new Date().toISOString()
+    };
+    discoveryState.messages.push(tutorMsg);
+
+    // Update profile draft
+    if (result.updatedProfile) {
+      discoveryState.profileDraft = {
+        ...discoveryState.profileDraft,
+        ...result.updatedProfile
+      };
+      store.updateProfile(result.updatedProfile);
+    }
+
+    discoveryState.currentDimensionIndex += 1;
+    discoveryState.isConfirmed = result.isDiscoveryComplete;
+    if (result.confirmationSummary) {
+      discoveryState.summary = result.confirmationSummary;
+    }
+    discoveryState.updatedAt = new Date().toISOString();
+
+    store.saveDiscoveryState(discoveryState);
+    res.json(discoveryState);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/discovery/confirm', (req: Request, res: Response) => {
+  try {
+    const discoveryState = store.getDiscoveryState();
+    if (discoveryState) {
+      discoveryState.isConfirmed = true;
+      store.saveDiscoveryState(discoveryState);
+    }
+    const profile = store.getProfile();
+    res.json({ success: true, profile });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =========================================================================
+// ADAPTIVE DIAGNOSTIC ASSESSMENT ROUTES
+// =========================================================================
+
+app.get('/api/diagnostic/session', (req: Request, res: Response) => {
+  try {
+    const session = store.getDiagnosticSession();
+    res.json({ session });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/diagnostic/start', async (req: Request, res: Response) => {
+  try {
+    const { mode = 'standard' } = req.body as { mode: DiagnosticMode };
+    const profile = store.getProfile();
+
+    let minQuestions = 8;
+    let maxQuestions = 14;
+    if (mode === 'quick') {
+      minQuestions = 5;
+      maxQuestions = 8;
+    } else if (mode === 'comprehensive') {
+      minQuestions = 15;
+      maxQuestions = 22;
+    }
+
+    const initialSession: DiagnosticSession = {
+      sessionId: `diag-sess-${Date.now()}`,
+      mode,
+      status: 'in_progress',
+      currentIndex: 1,
+      minQuestions,
+      maxQuestions,
+      history: [],
+      currentEstimates: {
+        grammar: {
+          category: 'grammar',
+          cefrRange: profile.current_level || 'B2',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: [],
+          recurringErrors: [],
+          unassessedSubskills: []
+        },
+        vocabulary: {
+          category: 'vocabulary',
+          cefrRange: profile.current_level || 'B2',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: [],
+          recurringErrors: [],
+          unassessedSubskills: []
+        },
+        reading: {
+          category: 'reading',
+          cefrRange: profile.current_level || 'B2',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: [],
+          recurringErrors: [],
+          unassessedSubskills: []
+        },
+        writing: {
+          category: 'writing',
+          cefrRange: profile.current_level || 'B2',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: [],
+          recurringErrors: [],
+          unassessedSubskills: []
+        },
+        speaking: {
+          category: 'speaking',
+          cefrRange: 'Not Assessed (Optional)',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: ['Speech fluency requires audio session'],
+          recurringErrors: [],
+          unassessedSubskills: ['Spoken spontaneous output', 'Pronunciation']
+        },
+        listening: {
+          category: 'listening',
+          cefrRange: 'Not Assessed (Optional)',
+          confidence: 'low',
+          evidenceCount: 0,
+          correctCount: 0,
+          demonstratedStrengths: [],
+          priorityWeaknesses: [],
+          recurringErrors: [],
+          unassessedSubskills: ['Spoken accent comprehension']
+        }
+      },
+      overallCEFR: profile.current_level || 'B2',
+      startedAt: new Date().toISOString(),
+      lastActiveAt: new Date().toISOString()
+    };
+
+    // Generate first adaptive question
+    const firstQ = await aiService.generateAdaptiveDiagnosticQuestion(initialSession, profile);
+    initialSession.currentQuestion = firstQ;
+
+    store.saveDiagnosticSession(initialSession);
+    res.json(initialSession);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/diagnostic/next-question', async (req: Request, res: Response) => {
+  try {
+    const session = store.getDiagnosticSession();
+    if (!session) {
+      return res.status(400).json({ error: 'No active diagnostic session' });
+    }
+
+    const profile = store.getProfile();
+    const nextQ = await aiService.generateAdaptiveDiagnosticQuestion(session, profile);
+    session.currentQuestion = nextQ;
+    session.currentIndex = session.history.length + 1;
+    session.lastActiveAt = new Date().toISOString();
+
+    store.saveDiagnosticSession(session);
+    res.json({ question: nextQ, session });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/diagnostic/submit-answer', async (req: Request, res: Response) => {
+  try {
+    const { question, userAnswer, durationSeconds = 0 } = req.body;
+    let session = store.getDiagnosticSession();
+    if (!session) {
+      return res.status(400).json({ error: 'No active diagnostic session' });
+    }
+
+    const profile = store.getProfile();
+    const { evaluation, writingRubric } = await aiService.evaluateDiagnosticAnswer(
+      question,
+      userAnswer,
+      profile
+    );
+
+    // Record attempt
+    const attempt = {
+      id: `diag-att-${Date.now()}`,
+      question,
+      userAnswer,
+      verdict: evaluation.verdict,
+      evaluation,
+      writingRubric,
+      durationSeconds,
+      timestamp: new Date().toISOString()
+    };
+    session.history.push(attempt);
+    session.lastActiveAt = new Date().toISOString();
+
+    // Check adaptive stopping rule:
+    // Has answered minimum questions AND covered all 4 core dimensions (grammar, vocab, reading, writing)?
+    const count = session.history.length;
+    const hasGrammar = session.history.some(h => h.question.section === 'grammar');
+    const hasVocab = session.history.some(h => h.question.section === 'vocabulary');
+    const hasReading = session.history.some(h => h.question.section === 'reading');
+    const hasWriting = session.history.some(h => h.question.section === 'writing');
+
+    const canStop = count >= session.minQuestions && hasGrammar && hasVocab && hasReading && hasWriting;
+    const mustStop = count >= session.maxQuestions;
+
+    store.saveDiagnosticSession(session);
+
+    res.json({
+      evaluation,
+      writingRubric,
+      canStop,
+      mustStop,
+      historyCount: count,
+      minQuestions: session.minQuestions,
+      maxQuestions: session.maxQuestions
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/diagnostic/pause', (req: Request, res: Response) => {
+  try {
+    const session = store.getDiagnosticSession();
+    if (session) {
+      session.status = 'paused';
+      session.lastActiveAt = new Date().toISOString();
+      store.saveDiagnosticSession(session);
+    }
+    res.json({ success: true, message: 'Assessment saved. You can resume anytime.' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/diagnostic/complete', async (req: Request, res: Response) => {
+  try {
+    const session = store.getDiagnosticSession();
+    if (!session) {
+      return res.status(400).json({ error: 'No active diagnostic session' });
+    }
+
+    const profile = store.getProfile();
+    session.status = 'completed';
+    session.completedAt = new Date().toISOString();
+
+    // Generate comprehensive diagnostic report
+    const report = await aiService.computeDiagnosticReport(session, profile);
+    store.saveDiagnosticReport(report);
+
+    // Generate personalized study plan
+    const studyPlan = await aiService.generatePersonalizedStudyPlan(report, profile);
+    store.saveStudyPlan(studyPlan);
+
+    // Update profile level with confirmed CEFR estimate
+    const finalLevel = report.overallCEFR.includes('C1') ? 'C1' : report.overallCEFR.includes('B2') ? 'B2' : 'B1';
+    store.updateProfile({
+      current_level: finalLevel as any,
+      goal_summary: `Calibrated at ${report.overallCEFR} based on adaptive diagnostic assessment.`
+    });
+
+    // Clear active session since completed
+    store.clearDiagnosticSession();
+
+    res.json({ report, studyPlan });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/diagnostic/reports', (req: Request, res: Response) => {
+  try {
+    const reports = store.getDiagnosticReports();
+    res.json(reports);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =========================================================================
+// PERSONALIZED STUDY PLAN ROUTES
+// =========================================================================
+
+app.get('/api/study-plan', (req: Request, res: Response) => {
+  try {
+    const plan = store.getStudyPlan();
+    res.json({ plan });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/study-plan/approve', (req: Request, res: Response) => {
+  try {
+    let plan = store.getStudyPlan();
+    if (!plan) {
+      return res.status(404).json({ error: 'No study plan to approve' });
+    }
+
+    const { adjustedMinutes, adjustedPriorities } = req.body;
+    if (adjustedPriorities) {
+      plan.prioritizedSkills = adjustedPriorities;
+    }
+
+    plan.learnerApprovalStatus = 'approved';
+    plan.approvedAt = new Date().toISOString();
+    store.saveStudyPlan(plan);
+
+    // Mark onboarding fully completed
+    const updatedProfile = store.updateProfile({
+      onboarding_completed: true,
+      daily_minutes: adjustedMinutes || plan.dailyRoutineTemplate.reduce((acc, s) => acc + s.minutes, 0)
+    });
+
+    res.json({ success: true, plan, profile: updatedProfile });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// =========================================================================
+// LESSON GENERATION & QUESTIONS (EXISTING CORE DAILY FLOW)
+// =========================================================================
+
 app.post('/api/lesson/plan', async (req: Request, res: Response) => {
   try {
     const profile = store.getProfile();
@@ -120,7 +551,7 @@ app.post('/api/lesson/question', async (req: Request, res: Response) => {
     const profile = store.getProfile();
     const question = await aiService.generateQuestion(section, profile, skillName, contextTopic);
     
-    // If it comes with a vocab card, automatically register it in long-term memory
+    // Automatically register vocab card
     if (question.vocab_card) {
       store.saveVocabularyItem(question.vocab_card);
     }

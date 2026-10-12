@@ -30,6 +30,7 @@ export default function App() {
 
   // Modals state
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [onboardingPhase, setOnboardingPhase] = useState<'discovery' | 'diagnostic' | 'report' | 'plan'>('discovery');
   const [showMemoryDrawer, setShowMemoryDrawer] = useState<boolean>(false);
   const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
@@ -57,6 +58,7 @@ export default function App() {
       setMilestonesData(computedMilestones);
 
       if (!userProfile.onboarding_completed) {
+        setOnboardingPhase('discovery');
         setShowOnboarding(true);
       } else {
         // Load or create active lesson plan
@@ -166,7 +168,10 @@ export default function App() {
         onOpenSettings={() => setShowSettingsModal(true)}
         onOpenSummary={() => setShowSummaryModal(true)}
         hasActiveSummary={Boolean(activeSummary)}
-        onRestartOnboarding={() => setShowOnboarding(true)}
+        onRestartOnboarding={() => {
+          setOnboardingPhase('discovery');
+          setShowOnboarding(true);
+        }}
       />
 
       {/* Main Content Area */}
@@ -206,10 +211,11 @@ export default function App() {
         />
       )}
 
-      {/* Modals & Drawers */}
+      {/* Conversational Discovery & Adaptive Diagnostic Modal */}
       {showOnboarding && (
         <OnboardingModal
           currentProfile={profile}
+          initialPhase={onboardingPhase}
           onComplete={handleOnboardingComplete}
         />
       )}
@@ -226,6 +232,10 @@ export default function App() {
         isOpen={showMemoryDrawer}
         onClose={() => setShowMemoryDrawer(false)}
         onResetComplete={initApp}
+        onRetakeDiagnostic={() => {
+          setOnboardingPhase('diagnostic');
+          setShowOnboarding(true);
+        }}
       />
 
       <SettingsModal
@@ -233,7 +243,10 @@ export default function App() {
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
         onUpdated={updated => setProfile(updated)}
-        onRetakeOnboarding={() => setShowOnboarding(true)}
+        onRetakeOnboarding={() => {
+          setOnboardingPhase('discovery');
+          setShowOnboarding(true);
+        }}
       />
     </div>
   );

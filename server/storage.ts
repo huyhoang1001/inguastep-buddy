@@ -7,7 +7,11 @@ import {
   Attempt,
   LessonPlan,
   DailySummary,
-  LearningDataExport
+  LearningDataExport,
+  DiscoveryState,
+  DiagnosticSession,
+  DiagnosticReport,
+  PersonalizedStudyPlan
 } from '../src/types/learning.js';
 
 interface DatabaseSchema {
@@ -17,6 +21,10 @@ interface DatabaseSchema {
   attempts: Attempt[];
   lessons: LessonPlan[];
   summaries: DailySummary[];
+  discoveryState?: DiscoveryState;
+  diagnosticSession?: DiagnosticSession;
+  diagnosticReports: DiagnosticReport[];
+  studyPlan?: PersonalizedStudyPlan;
 }
 
 const DEFAULT_PROFILE: UserProfile = {
@@ -33,6 +41,10 @@ const DEFAULT_PROFILE: UserProfile = {
   feedback_style: 'encouraging',
   enable_audio_tips: true,
   onboarding_completed: false,
+  struggles: [],
+  timeline_target: '3 months',
+  audio_importance: false,
+  confidence_in_level: 'moderate',
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString()
 };
@@ -157,7 +169,11 @@ class MemoryStore {
           vocabulary: parsed.vocabulary || INITIAL_VOCABULARY,
           attempts: parsed.attempts || [],
           lessons: parsed.lessons || [],
-          summaries: parsed.summaries || []
+          summaries: parsed.summaries || [],
+          discoveryState: parsed.discoveryState,
+          diagnosticSession: parsed.diagnosticSession,
+          diagnosticReports: parsed.diagnosticReports || [],
+          studyPlan: parsed.studyPlan
         };
       }
     } catch (err) {
@@ -170,7 +186,8 @@ class MemoryStore {
       vocabulary: [...INITIAL_VOCABULARY],
       attempts: [],
       lessons: [],
-      summaries: []
+      summaries: [],
+      diagnosticReports: []
     };
   }
 
@@ -345,6 +362,63 @@ class MemoryStore {
     return summary;
   }
 
+  // Conversational Discovery persistence
+  public getDiscoveryState(): DiscoveryState | null {
+    return this.memoryData.discoveryState || null;
+  }
+
+  public saveDiscoveryState(state: DiscoveryState): DiscoveryState {
+    this.memoryData.discoveryState = state;
+    this.persist();
+    return state;
+  }
+
+  // Adaptive Diagnostic Session persistence
+  public getDiagnosticSession(): DiagnosticSession | null {
+    return this.memoryData.diagnosticSession || null;
+  }
+
+  public saveDiagnosticSession(session: DiagnosticSession): DiagnosticSession {
+    this.memoryData.diagnosticSession = session;
+    this.persist();
+    return session;
+  }
+
+  public clearDiagnosticSession() {
+    delete this.memoryData.diagnosticSession;
+    this.persist();
+  }
+
+  // Diagnostic Reports
+  public getDiagnosticReports(): DiagnosticReport[] {
+    return [...(this.memoryData.diagnosticReports || [])];
+  }
+
+  public saveDiagnosticReport(report: DiagnosticReport): DiagnosticReport {
+    if (!this.memoryData.diagnosticReports) {
+      this.memoryData.diagnosticReports = [];
+    }
+    const idx = this.memoryData.diagnosticReports.findIndex(r => r.id === report.id);
+    if (idx >= 0) {
+      this.memoryData.diagnosticReports[idx] = report;
+    } else {
+      this.memoryData.diagnosticReports.push(report);
+    }
+    this.persist();
+    return report;
+  }
+
+  // Study Plan
+  public getStudyPlan(): PersonalizedStudyPlan | null {
+    return this.memoryData.studyPlan || null;
+  }
+
+  public saveStudyPlan(plan: PersonalizedStudyPlan): PersonalizedStudyPlan {
+    this.memoryData.studyPlan = plan;
+    this.persist();
+    return plan;
+  }
+
   public exportAll(): LearningDataExport {
     return {
       profile: this.getProfile(),
@@ -353,6 +427,9 @@ class MemoryStore {
       attempts: this.getAttempts(),
       lessons: this.getLessons(),
       summaries: this.getSummaries(),
+      discoveryState: this.memoryData.discoveryState,
+      diagnosticReports: this.memoryData.diagnosticReports,
+      studyPlan: this.memoryData.studyPlan,
       exported_at: new Date().toISOString()
     };
   }
@@ -364,6 +441,9 @@ class MemoryStore {
     if (Array.isArray(data.attempts)) this.memoryData.attempts = data.attempts;
     if (Array.isArray(data.lessons)) this.memoryData.lessons = data.lessons;
     if (Array.isArray(data.summaries)) this.memoryData.summaries = data.summaries;
+    if (data.discoveryState) this.memoryData.discoveryState = data.discoveryState;
+    if (Array.isArray(data.diagnosticReports)) this.memoryData.diagnosticReports = data.diagnosticReports;
+    if (data.studyPlan) this.memoryData.studyPlan = data.studyPlan;
     this.persist();
   }
 
@@ -374,7 +454,8 @@ class MemoryStore {
       vocabulary: [],
       attempts: [],
       lessons: [],
-      summaries: []
+      summaries: [],
+      diagnosticReports: []
     };
     this.persist();
   }

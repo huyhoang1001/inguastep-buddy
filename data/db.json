@@ -1,0 +1,947 @@
+{
+  "profile": {
+    "id": "learner-primary",
+    "name": "Learner",
+    "current_level": "B2",
+    "target_level": "C1",
+    "primary_goal": "workplace_tech",
+    "goal_summary": "Targeting C1 with focus on workplace tech. Diagnostic score: 2/3.",
+    "explanation_language": "en",
+    "general_vs_work_ratio": 65,
+    "daily_minutes": 35,
+    "days_per_week": 5,
+    "feedback_style": "encouraging",
+    "enable_audio_tips": true,
+    "onboarding_completed": true,
+    "created_at": "2026-10-12T15:36:28.493Z",
+    "updated_at": "2026-10-12T15:49:21.572Z"
+  },
+  "skills": [
+    {
+      "skill_id": "past_simple_vs_past_perfect",
+      "skill_name": "Past Simple vs. Past Perfect",
+      "category": "grammar",
+      "status": "learning",
+      "accuracy_rate": 0.75,
+      "total_attempts": 4,
+      "last_practiced_at": "2026-10-12T15:36:28.493Z",
+      "next_review_at": "2026-10-13T15:36:28.493Z",
+      "recurring_errors": [
+        "Confusing had + V3 with past simple when time markers are implicit"
+      ]
+    },
+    {
+      "skill_id": "third_and_mixed_conditionals",
+      "skill_name": "Third & Mixed Conditionals",
+      "category": "grammar",
+      "status": "learning",
+      "accuracy_rate": 0.6,
+      "total_attempts": 5,
+      "last_practiced_at": "2026-10-12T15:36:28.493Z",
+      "next_review_at": "2026-10-14T15:36:28.493Z",
+      "recurring_errors": [
+        "Using would have + V3 instead of would + V for present outcome"
+      ]
+    },
+    {
+      "skill_id": "collocation_mitigate",
+      "skill_name": "Collocations with Mitigate",
+      "category": "vocabulary",
+      "status": "mostly_mastered",
+      "accuracy_rate": 0.9,
+      "total_attempts": 3,
+      "last_practiced_at": "2026-10-12T15:36:28.493Z",
+      "next_review_at": "2026-10-15T15:36:28.493Z",
+      "recurring_errors": []
+    },
+    {
+      "skill_id": "workplace_slack_update",
+      "skill_name": "Clear Workplace Status Updates",
+      "category": "writing",
+      "status": "learning",
+      "accuracy_rate": 0.8,
+      "total_attempts": 2,
+      "last_practiced_at": "2026-10-12T15:36:28.493Z",
+      "next_review_at": "2026-10-14T15:36:28.493Z",
+      "recurring_errors": [
+        "Mixing past and present continuous tenses when stating blockers"
+      ]
+    },
+    {
+      "skill_id": "curric-1791819788524-gram-b2-used-to-1",
+      "skill_name": "used to vs. be/get used to",
+      "category": "grammar",
+      "status": "mostly_mastered",
+      "accuracy_rate": 1,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:44:07.541Z",
+      "next_review_at": "2026-10-13T15:44:07.541Z",
+      "recurring_errors": [
+        "Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing."
+      ]
+    },
+    {
+      "skill_id": "gen-1791819864906-duk8",
+      "skill_name": "Collocations with Mitigate",
+      "category": "vocabulary",
+      "status": "mostly_mastered",
+      "accuracy_rate": 1,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:44:47.038Z",
+      "next_review_at": "2026-10-13T15:44:47.038Z",
+      "recurring_errors": [
+        "Động từ 'mitigate' là lựa chọn chính xác vì nó tạo thành collocation chuẩn 'mitigate the impact of something' (giảm thiểu tác động tiêu cực của điều gì). Loại các phương án khác: 'deteriorate' là nội động từ (làm xấu đi); 'abolish' mang nghĩa bãi bỏ (luật lệ, chế độ); 'alleviate' thường đi với nỗi đau/triệu chứng (pain, suffering) hơn là 'the impact of storms'."
+      ]
+    },
+    {
+      "skill_id": "gen-1791819898484-w3r8",
+      "skill_name": "Past Simple vs. Past Perfect",
+      "category": "reading",
+      "status": "learning",
+      "accuracy_rate": 0,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:45:49.178Z",
+      "next_review_at": "2026-10-13T15:45:49.178Z",
+      "recurring_errors": [
+        "Cấu trúc 'By the time the project lead sent out the announcement email... several team members had already reported critical sync errors.' (Quá khứ hoàn thành chỉ hành động xảy ra trước)."
+      ]
+    },
+    {
+      "skill_id": "curric-1791819957299-write-b2-workplace-1",
+      "skill_name": "Clear Workplace Status Updates",
+      "category": "writing",
+      "status": "learning",
+      "accuracy_rate": 0,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:46:18.683Z",
+      "next_review_at": "2026-10-13T15:46:18.683Z",
+      "recurring_errors": [
+        "Câu trả lời chỉ là văn bản thử nghiệm ('this is just for testing') và chưa đáp ứng bất kỳ yêu cầu nào của đề bài."
+      ]
+    },
+    {
+      "skill_id": "curric-1791820053711-gram-b2-used-to-1",
+      "skill_name": "used to vs. be/get used to",
+      "category": "grammar",
+      "status": "learning",
+      "accuracy_rate": 0,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:47:40.909Z",
+      "next_review_at": "2026-10-13T15:47:40.909Z",
+      "recurring_errors": [
+        "Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing."
+      ]
+    },
+    {
+      "skill_id": "curric-1791820134292-gram-b2-conditionals-1",
+      "skill_name": "Third & Mixed Conditionals",
+      "category": "grammar",
+      "status": "learning",
+      "accuracy_rate": 0,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:49:26.425Z",
+      "next_review_at": "2026-10-13T15:49:26.425Z",
+      "recurring_errors": [
+        "Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\"."
+      ]
+    },
+    {
+      "skill_id": "curric-1791820462185-gram-b2-conditionals-1",
+      "skill_name": "Third & Mixed Conditionals",
+      "category": "grammar",
+      "status": "mostly_mastered",
+      "accuracy_rate": 1,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T15:59:41.763Z",
+      "next_review_at": "2026-10-13T15:59:41.763Z",
+      "recurring_errors": [
+        "Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\"."
+      ]
+    },
+    {
+      "skill_id": "gen-1791820799917-bxid",
+      "skill_name": "Past Simple vs. Past Perfect",
+      "category": "grammar",
+      "status": "mostly_mastered",
+      "accuracy_rate": 1,
+      "total_attempts": 1,
+      "last_practiced_at": "2026-10-12T16:00:06.121Z",
+      "next_review_at": "2026-10-13T16:00:06.121Z",
+      "recurring_errors": [
+        "The Past Perfect is required here because the action of uploading the files was finished before the IT department arrived. Since 'arrived' is in the Past Simple, the preceding action must be in the Past Perfect."
+      ]
+    }
+  ],
+  "vocabulary": [
+    {
+      "id": "vocab-1",
+      "word": "Mitigate",
+      "part_of_speech": "verb",
+      "ipa": "/ˈmɪt.ɪ.ɡeɪt/",
+      "pronunciation_tip": "Stress the first syllable: MIT-i-gate.",
+      "meaning": "To make something less severe, serious, or painful.",
+      "collocation_pattern": "mitigate + risks / impact / losses",
+      "example_general": "We need to mitigate the effects of the storm.",
+      "example_workplace": "The new software update helps mitigate security risks for our remote servers.",
+      "similar_word_comparison": {
+        "word": "Alleviate",
+        "difference": "Alleviate is usually used for suffering or problems (e.g., alleviate pain), while mitigate is more common for risks, threats, or negative impacts in a formal/business context."
+      },
+      "review_stage": 6,
+      "next_review_at": "2026-10-14T15:36:28.493Z",
+      "first_seen_at": "2026-10-09T15:36:28.493Z",
+      "last_reviewed_at": "2026-10-12T16:00:35.239Z",
+      "times_correct": 4,
+      "times_incorrect": 0
+    },
+    {
+      "id": "vocab-2",
+      "word": "streamline",
+      "part_of_speech": "verb",
+      "ipa": "/ˈstriːmlaɪn/",
+      "pronunciation_tip": "Âm /iː/ kéo dài trong stream; trọng âm vào âm đầu: STREAM-line.",
+      "meaning": "tinh gọn hoá quy trình để loại bỏ khâu thừa và tiết kiệm thời gian",
+      "collocation_pattern": "streamline + process / workflow / operations",
+      "example_general": "The clinic introduced an online booking form to streamline admissions.",
+      "example_workplace": "We automated the release cycle to streamline our deployment pipeline.",
+      "similar_word_comparison": {
+        "word": "simplify",
+        "difference": "simplify là làm cho dễ hiểu hơn; streamline là cắt bớt các bước rườm rà để vận hành hiệu quả hơn."
+      },
+      "review_stage": 1,
+      "next_review_at": "2026-10-13T15:36:28.493Z",
+      "first_seen_at": "2026-10-12T15:36:28.493Z",
+      "last_reviewed_at": "2026-10-12T15:36:28.493Z",
+      "times_correct": 1,
+      "times_incorrect": 0
+    }
+  ],
+  "attempts": [
+    {
+      "id": "att-1791819847541-hb95",
+      "lesson_id": "lesson-1791819794928",
+      "question_id": "curric-1791819788524-gram-b2-used-to-1",
+      "section": "grammar",
+      "skill_name": "used to vs. be/get used to",
+      "user_answer": "B",
+      "verdict": "correct",
+      "evaluation": {
+        "verdict": "correct",
+        "user_answer": "B",
+        "expected_answer": "managing",
+        "full_correct_sentence": "After three months of working remotely, Lan is finally getting used to **managing** her daily schedule independently.",
+        "decisive_clue": "Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing.",
+        "explanation": "Chính xác! Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing.",
+        "error_tags": [],
+        "needs_retry": false,
+        "next_action": "continue"
+      },
+      "created_at": "2026-10-12T15:44:07.541Z"
+    },
+    {
+      "id": "att-1791819887038-pi3f",
+      "lesson_id": "lesson-1791819794928",
+      "question_id": "gen-1791819864906-duk8",
+      "section": "vocabulary",
+      "skill_name": "Collocations with Mitigate",
+      "user_answer": "A",
+      "verdict": "correct",
+      "evaluation": {
+        "verdict": "correct",
+        "user_answer": "A",
+        "expected_answer": "mitigate",
+        "full_correct_sentence": "Choose the word that best completes the sentence:\n\n\"The local government is investing in flood barriers to **mitigate**____ the impact of future seasonal storms on coastal communities.\"",
+        "decisive_clue": "Động từ 'mitigate' là lựa chọn chính xác vì nó tạo thành collocation chuẩn 'mitigate the impact of something' (giảm thiểu tác động tiêu cực của điều gì). Loại các phương án khác: 'deteriorate' là nội động từ (làm xấu đi); 'abolish' mang nghĩa bãi bỏ (luật lệ, chế độ); 'alleviate' thường đi với nỗi đau/triệu chứng (pain, suffering) hơn là 'the impact of storms'.",
+        "explanation": "Chính xác! Động từ 'mitigate' là lựa chọn chính xác vì nó tạo thành collocation chuẩn 'mitigate the impact of something' (giảm thiểu tác động tiêu cực của điều gì). Loại các phương án khác: 'deteriorate' là nội động từ (làm xấu đi); 'abolish' mang nghĩa bãi bỏ (luật lệ, chế độ); 'alleviate' thường đi với nỗi đau/triệu chứng (pain, suffering) hơn là 'the impact of storms'.",
+        "error_tags": [],
+        "needs_retry": false,
+        "next_action": "continue"
+      },
+      "created_at": "2026-10-12T15:44:47.038Z"
+    },
+    {
+      "id": "att-1791819949178-8dj4",
+      "lesson_id": "lesson-1791819794928",
+      "question_id": "gen-1791819898484-w3r8",
+      "section": "reading",
+      "skill_name": "Past Simple vs. Past Perfect",
+      "user_answer": "A",
+      "verdict": "incorrect",
+      "evaluation": {
+        "verdict": "incorrect",
+        "expected_answer": "Several team members flagged critical synchronization errors.",
+        "full_correct_sentence": "Several team members had already flagged critical synchronization errors before the announcement email was sent out.",
+        "decisive_clue": "Cấu trúc 'By the time the project lead sent out the announcement email... several team members had already reported critical sync errors.' (Quá khứ hoàn thành chỉ hành động xảy ra trước).",
+        "explanation": "Câu trả lời chưa chính xác. Trong bài đọc, sự việc dùng thì Quá khứ hoàn thành ('had already reported/flagged...') đi kèm với mệnh đề 'By the time...' mới là hành động diễn ra trước thời điểm gửi email thông báo.",
+        "contrast_explanation": "Phương án A là hành động diễn ra sau khi email đã được gửi (được chia ở thì Quá khứ đơn - Past Simple), nên không thỏa mãn yêu cầu tìm sự kiện xảy ra 'BEFORE'.",
+        "corrected_text": "",
+        "key_corrections": [],
+        "reusable_pattern": "By the time + S + V-ed/V2, S + had + V-ed/V3 (Hành động dùng 'had + V3' xảy ra trước hành động dùng 'V-ed/V2')",
+        "error_tags": [
+          "reading_comprehension",
+          "tense_timeline_confusion"
+        ],
+        "needs_retry": true,
+        "next_action": "retry",
+        "user_answer": "A"
+      },
+      "created_at": "2026-10-12T15:45:49.178Z"
+    },
+    {
+      "id": "att-1791819978683-jl9i",
+      "lesson_id": "lesson-1791819794928",
+      "question_id": "curric-1791819957299-write-b2-workplace-1",
+      "section": "writing",
+      "skill_name": "Clear Workplace Status Updates",
+      "user_answer": "this is just for testing",
+      "verdict": "incorrect",
+      "evaluation": {
+        "verdict": "incorrect",
+        "expected_answer": "I ran into an unexpected bug while testing the new feature, which is taking longer than planned to resolve. I am currently debugging the issue with the backend team. I expect to wrap this up and push the update by 4 PM today.",
+        "full_correct_sentence": "I ran into an unexpected bug while testing the new feature, which is taking longer than planned to resolve. I am currently debugging the issue with the backend team, and I expect to wrap this up by 4 PM today.",
+        "decisive_clue": "Câu trả lời chỉ là văn bản thử nghiệm ('this is just for testing') và chưa đáp ứng bất kỳ yêu cầu nào của đề bài.",
+        "explanation": "Câu trả lời của bạn chưa bám sát yêu cầu đề bài. Đề bài yêu cầu bạn viết 2-3 câu cập nhật cho nhóm về tiến độ công việc bị chậm do lỗi phát sinh: (1) chuyện gì đã xảy ra, (2) bạn đang làm gì để xử lý, và (3) dự kiến khi nào hoàn thành.",
+        "contrast_explanation": "Thay vì gửi nội dung thử nghiệm, một câu cập nhật công việc chuyên nghiệp cần sử dụng: Quá khứ đơn (Past Simple) để báo lỗi ('ran into an unexpected bug'), Hiện tại tiếp diễn (Present Continuous) cho việc đang xử lý ('am currently investigating/fixing'), và Thì tương lai (Future) cho thời gian dự kiến ('expect to finish by...').",
+        "corrected_text": "I ran into an unexpected bug earlier today, so the task is taking longer than anticipated. I am currently working on a fix, and I expect to finish it by the end of the day.",
+        "key_corrections": [
+          {
+            "original": "this is just for testing",
+            "corrected": "I ran into an unexpected bug earlier today, so the task is taking longer than anticipated. I am currently working on a fix, and I expect to finish it by the end of the day.",
+            "reason": "Viết lại hoàn chỉnh để đáp ứng đầy đủ 3 ý của đề bài với giọng văn chuyên nghiệp."
+          }
+        ],
+        "reusable_pattern": "I ran into [issue], so [task] is taking longer than expected. I am currently [action], and I expect to finish by [time].",
+        "error_tags": [
+          "task_achievement",
+          "off_topic"
+        ],
+        "needs_retry": true,
+        "next_action": "retry",
+        "user_answer": "this is just for testing"
+      },
+      "created_at": "2026-10-12T15:46:18.683Z"
+    },
+    {
+      "id": "att-1791820060908-sixw",
+      "lesson_id": "lesson-1791820060263",
+      "question_id": "curric-1791820053711-gram-b2-used-to-1",
+      "section": "grammar",
+      "skill_name": "used to vs. be/get used to",
+      "user_answer": "A",
+      "verdict": "incorrect",
+      "evaluation": {
+        "verdict": "incorrect",
+        "user_answer": "A",
+        "expected_answer": "managing",
+        "full_correct_sentence": "After three months of working remotely, Lan is finally getting used to **managing** her daily schedule independently.",
+        "decisive_clue": "Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing.",
+        "explanation": "Chưa chính xác. Cấu trúc \"get used to + V-ing\". Trong cấu trúc này, \"to\" là giới từ, nên động từ phải thêm đuôi -ing.",
+        "contrast_explanation": "Hãy chú ý từ khóa trong ngữ cảnh câu để chọn đúng thì hoặc dạng từ.",
+        "error_tags": [
+          "used to vs. be/get used to"
+        ],
+        "needs_retry": true,
+        "next_action": "retry"
+      },
+      "created_at": "2026-10-12T15:47:40.908Z"
+    },
+    {
+      "id": "att-1791820166425-x65c",
+      "lesson_id": "lesson-1791820100568",
+      "question_id": "curric-1791820134292-gram-b2-conditionals-1",
+      "section": "grammar",
+      "skill_name": "Third & Mixed Conditionals",
+      "user_answer": "D",
+      "verdict": "incorrect",
+      "evaluation": {
+        "verdict": "incorrect",
+        "user_answer": "D",
+        "expected_answer": "would be",
+        "full_correct_sentence": "If we had implemented automated integration tests last month, our deployment process **would be** much smoother today.",
+        "decisive_clue": "Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\".",
+        "explanation": "Not quite. Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\".",
+        "contrast_explanation": "Hãy chú ý từ khóa trong ngữ cảnh câu để chọn đúng thì hoặc dạng từ.",
+        "error_tags": [
+          "Third & Mixed Conditionals"
+        ],
+        "needs_retry": true,
+        "next_action": "retry"
+      },
+      "created_at": "2026-10-12T15:49:26.425Z"
+    },
+    {
+      "id": "att-1791820781762-fqtz",
+      "lesson_id": "lesson-1791820100568",
+      "question_id": "curric-1791820462185-gram-b2-conditionals-1",
+      "section": "grammar",
+      "skill_name": "Third & Mixed Conditionals",
+      "user_answer": "B",
+      "verdict": "correct",
+      "evaluation": {
+        "verdict": "correct",
+        "user_answer": "B",
+        "expected_answer": "would be",
+        "full_correct_sentence": "If we had implemented automated integration tests last month, our deployment process **would be** much smoother today.",
+        "decisive_clue": "Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\".",
+        "explanation": "Well done! Mixed Conditional loại 3-2: Vế If nói về giả định quá khứ (\"had implemented last month\"), vế kết quả nói về thực tế hiện tại (\"today\"), do đó dùng \"would + V\" thay vì \"would have + V3\".",
+        "error_tags": [],
+        "needs_retry": false,
+        "next_action": "continue"
+      },
+      "created_at": "2026-10-12T15:59:41.762Z"
+    },
+    {
+      "id": "att-1791820806121-wlce",
+      "lesson_id": "lesson-1791820100568",
+      "question_id": "gen-1791820799917-bxid",
+      "section": "grammar",
+      "skill_name": "Past Simple vs. Past Perfect",
+      "user_answer": "B",
+      "verdict": "correct",
+      "evaluation": {
+        "verdict": "correct",
+        "user_answer": "B",
+        "expected_answer": "had uploaded",
+        "full_correct_sentence": "By the time the IT department arrived to fix the server, the manager **had uploaded**____ all the important files to the cloud.",
+        "decisive_clue": "The Past Perfect is required here because the action of uploading the files was finished before the IT department arrived. Since 'arrived' is in the Past Simple, the preceding action must be in the Past Perfect.",
+        "explanation": "Well done! The Past Perfect is required here because the action of uploading the files was finished before the IT department arrived. Since 'arrived' is in the Past Simple, the preceding action must be in the Past Perfect.",
+        "error_tags": [],
+        "needs_retry": false,
+        "next_action": "continue"
+      },
+      "created_at": "2026-10-12T16:00:06.121Z"
+    }
+  ],
+  "lessons": [
+    {
+      "lesson_id": "lesson-1791819777129",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master mixed conditionals and narrative past tenses to accurately report technical incidents and their present consequences.",
+      "reason_for_selection": "Khắc phục trực tiếp lỗi dùng nhầm cấu trúc câu điều kiện hỗn hợp (Mixed Conditionals) khi nói về hậu quả ở hiện tại, chuẩn hóa thì Past Perfect trong ngữ cảnh không có mốc thời gian rõ ràng, và rèn luyện kỹ năng báo cáo blocker/sự cố chuẩn C1.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Mixed Conditionals (Past Cause, Present Effect) & Narrative Past Tenses",
+          "description": "Ôn tập sự khác biệt giữa Past Simple và Past Perfect khi liên kết các chuỗi hành động ngầm; thực hành phân biệt Third Conditional thuần túy với Mixed Conditional (If + had V3, S + would + V-bare) để diễn đạt nguyên nhân quá khứ ảnh hưởng đến thực tại.",
+          "estimated_minutes": 10,
+          "skill_target": "Third & Mixed Conditionals, Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "Lexical Focus: Collocations with 'Mitigate' & Technical Risk Management",
+          "description": "Nắm vững phát âm IPA và mẫu câu kết hợp tự nhiên: mitigate risk (/ˈmɪtɪɡeɪt rɪsk/), mitigate technical debt, mitigate the fallout; kết hợp các collocations nâng cao đi cùng danh từ trừu tượng trong môi trường Tech.",
+          "estimated_minutes": 8,
+          "skill_target": "Collocations with Mitigate",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Technical Post-Mortem: Root Cause Analysis & Ongoing Impact",
+          "description": "Đọc và phân tích đoạn trích báo cáo sự cố (post-mortem report) ngắn; xác định cách tác giả sử dụng thì quá khứ hoàn thành để chỉ nguyên nhân gốc rễ và Mixed Conditionals để trình bày tác động hiện hữu lên hệ thống.",
+          "estimated_minutes": 10,
+          "skill_target": "Contextual Reading & Grammar Identification",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Drafting an Incident Update & Blocker Summary",
+          "description": "Viết đoạn tóm tắt sự cố (4-5 câu) cho kênh trao đổi nội bộ (Slack/Teams): nêu nguyên nhân quá khứ, giải pháp giảm thiểu (dùng collocation với 'mitigate'), và trình bày nhất quán các blocker hiện tại mà không bị lẫn lộn giữa thì quá khứ và hiện tại tiếp diễn.",
+          "estimated_minutes": 7,
+          "skill_target": "Tense Consistency & Workplace Expression",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791819786574",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master Past Perfect vs. Past Simple and High-Impact Engineering Collocations",
+      "reason_for_selection": "Dựa trên mục tiêu giao tiếp chuyên nghiệp, bài học tập trung củng cố thì quá khứ hoàn thành trong báo cáo kỹ thuật và từ vựng tinh gọn quy trình.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Part A — Past Perfect in Incident Reports",
+          "description": "Phân biệt hành động xảy ra trước trong quá khứ khi giải thích sự cố.",
+          "estimated_minutes": 12,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "Part B — High-Impact Action Verbs",
+          "description": "Học từ \"mitigate\" & \"streamline\" kèm phát âm IPA và collocations.",
+          "estimated_minutes": 9,
+          "skill_target": "Collocations with Mitigate & Streamline",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Part C — Tech Strategy Reading",
+          "description": "Đoạn văn ngắn về cân bằng tốc độ release và technical debt.",
+          "estimated_minutes": 7,
+          "skill_target": "Reading Comprehension & Author Intent",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Part D — Workplace Communication",
+          "description": "Viết cập nhật tiến độ công việc ngắn gọn, tự nhiên.",
+          "estimated_minutes": 7,
+          "skill_target": "Clear Workplace Status Updates",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791819794928",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master mixed conditionals for present consequences and key collocations with 'mitigate' while maintaining tense consistency in technical updates.",
+      "reason_for_selection": "Khắc phục lỗi nhầm lẫn câu điều kiện hỗn hợp với loại 3 khi nói về kết quả ở hiện tại, đồng thời củng cố cách dùng từ 'mitigate' và giữ tính nhất quán về thì khi mô tả các blocker trong công việc.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Mixed Conditionals: Past Action, Present Outcome",
+          "description": "Phân tích và luyện tập cấu trúc 'If + had + V3, S + would + V(infinitive)' để diễn tả kết quả thực tế ở hiện tại, sửa triệt để phản xạ dùng thừa 'would have + V3'.",
+          "estimated_minutes": 10,
+          "skill_target": "Third & Mixed Conditionals",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "C1 Collocations with 'Mitigate' in Tech Contexts",
+          "description": "Nắm vững phát âm IPA (/ˈmɪt.ɪ.ɡeɪt/) cùng các cụm từ kết hợp chuẩn xác: mitigate risks, mitigate technical debt, mitigate vulnerabilities, mitigate the impact of downtime.",
+          "estimated_minutes": 8,
+          "skill_target": "Collocations with Mitigate",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Incident Post-Mortem: Implicit Past Tense Markers",
+          "description": "Đọc một đoạn báo cáo sự cố ngắn (Incident Post-Mortem) để phân tích trật tự thời gian giữa Past Simple và Past Perfect khi không có các từ nối thời gian hiển ngôn (như before/after).",
+          "estimated_minutes": 9,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Drafting Standup Updates & Blocker Statements",
+          "description": "Viết bản cập nhật tiến độ (3-4 câu) mô tả một blocker kỹ thuật, loại bỏ lỗi nhảy thì tùy tiện giữa quá khứ và hiện tại tiếp diễn, có sử dụng collocation với 'mitigate'.",
+          "estimated_minutes": 8,
+          "skill_target": "Mixing past and present continuous tenses when stating blockers",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791820020995",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master mixed conditionals for present outcomes and apply precise risk mitigation collocations in workplace tech contexts.",
+      "reason_for_selection": "Khắc phục triệt để lỗi dùng nhầm cấu trúc điều kiện hỗn hợp (Mixed Conditionals) khi nói về hệ quả ở hiện tại, đồng thời chuẩn hóa cách dùng Past Simple vs. Past Perfect và mở rộng collocations nâng cao với 'mitigate'.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Mixed Conditionals: Past Cause, Present Result",
+          "description": "Phân tích cấu trúc 'If + had + V3, would + V (bare)' để diễn tả hành động quá khứ ảnh hưởng đến thực tại, trực tiếp khắc phục lỗi nhầm lẫn với 'would have + V3'. Luyện tập 4 câu biến đổi ngữ cảnh tech.",
+          "estimated_minutes": 10,
+          "skill_target": "Third & Mixed Conditionals",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "C1 Collocations with 'Mitigate' (/ˈmɪt.ɪ.ɡeɪt/)",
+          "description": "Nắm vững phát âm IPA chuẩn và 4 cụm kết hợp tự nhiên: 'mitigate risks/threats', 'mitigate the impact', 'mitigate technical debt', và 'mitigation strategy'. Thực hành đặt câu phản xạ nhanh.",
+          "estimated_minutes": 7,
+          "skill_target": "Collocations with Mitigate",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Post-Mortem Report Analysis: System Outage",
+          "description": "Đọc đoạn báo cáo ngắn (180 từ) về sự cố hạ tầng. Nhận diện cách dùng ngầm định giữa Past Simple và Past Perfect để sắp xếp mốc thời gian sự kiện mà không cần liên từ chỉ thời gian rõ ràng.",
+          "estimated_minutes": 10,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Stand-up Blocker & Impact Update",
+          "description": "Viết 1 đoạn cập nhật blocker (40-60 từ) trong kênh trao đổi công việc, kết hợp 1 câu điều kiện hỗn hợp để giải thích nguyên nhân-hệ quả và 1 cụm collocation với 'mitigate' để đề xuất giải pháp xử lý.",
+          "estimated_minutes": 8,
+          "skill_target": "Mixing past and present continuous tenses when stating blockers",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791820026971",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master mixed conditionals for past causes with present impacts and accurately deploy collocations with 'mitigate' in tech workplace communications.",
+      "reason_for_selection": "Khắc phục triệt để lỗi dùng nhầm cấu trúc điều kiện hỗn hợp (dùng 'would have V3' thay vì 'would V') và phân biệt thì quá khứ khi báo cáo tiến độ/trở ngại trong môi trường kỹ thuật, kết hợp trau dồi từ vựng C1 về quản trị rủi ro.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Mixed Conditionals: Past Action with Present Consequence",
+          "description": "Phân tích và luyện tập cấu trúc điều kiện hỗn hợp (If + had + V3, S + would + V-inf) để sửa lỗi diễn đạt kết quả ở hiện tại; phân biệt rõ với Past Simple khi mốc thời gian là ngầm định.",
+          "estimated_minutes": 10,
+          "skill_target": "Third & Mixed Conditionals",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "C1 Vocabulary & Collocations: Mitigate in Tech Contexts",
+          "description": "Học phát âm chuẩn IPA (/ˈmɪt.ɪ.ɡeɪt/) và các collocations nâng cao: 'mitigate the impact', 'mitigate technical risks', 'proactively mitigate vulnerabilities' qua ví dụ thực tế.",
+          "estimated_minutes": 7,
+          "skill_target": "Collocations with Mitigate",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Reading Analysis: Tech Incident Post-Mortem",
+          "description": "Đọc đoạn phân tích sự cố hệ thống ngắn, chú trọng xác định thứ tự sự kiện có mốc thời gian ẩn (Past Simple vs. Past Perfect) và cách các kỹ sư mô tả giải pháp khắc phục.",
+          "estimated_minutes": 8,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Writing Workplace Status Updates & Blockers",
+          "description": "Thực hành viết bản cập nhật blocker (3-4 câu) dùng trong daily standup, kết hợp câu điều kiện hỗn hợp và cụm từ với 'mitigate', tránh chuyển đổi thì tuỳ tiện giữa quá khứ và hiện tại tiếp diễn.",
+          "estimated_minutes": 10,
+          "skill_target": "Stating Blockers without Tense Mixing",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791820060263",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master mixed conditionals (past cause, present result) and collocations with 'mitigate' to articulate workplace blockers and incident impacts accurately at a C1 level.",
+      "reason_for_selection": "Khắc phục triệt để lỗi nhầm lẫn cấu trúc Mixed Conditionals (If + had V3, would + V) và việc trộn lẫn thì khi báo cáo blockers, đồng thời chuẩn hóa cách dùng collocations với 'mitigate' trong giao tiếp kỹ thuật.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Mixed Conditionals (Past Cause, Present Result) vs. Third Conditional",
+          "description": "Phân tích cấu trúc câu điều kiện hỗn hợp (If + had V3, would + V0) cho kết quả ở hiện tại thay vì 'would have V3', kết hợp rà soát cách dùng Past Simple vs. Past Perfect khi không có mốc thời gian tường minh.",
+          "estimated_minutes": 10,
+          "skill_target": "Third & Mixed Conditionals",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "C1 Collocations with 'Mitigate' in Workplace Tech",
+          "description": "Học phát âm IPA /ˈmɪt.ɪ.ɡeɪt/ và các cụm cố định: 'mitigate the impact', 'mitigate technical debt', 'mitigate potential risks', 'mitigate latency issues' kèm ví dụ ngữ cảnh cụ thể.",
+          "estimated_minutes": 7,
+          "skill_target": "Collocations with Mitigate",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Root Cause Analysis (RCA) Brief Reading",
+          "description": "Đọc bản phân tích sự cố hệ thống ngắn (180-220 từ) chứa các cấu trúc thời quá khứ đan xen kết quả hiện tại; nhận diện chính xác vai trò của Past Perfect và Mixed Conditional trong văn bản kỹ thuật.",
+          "estimated_minutes": 8,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Async Blocker & Incident Status Update",
+          "description": "Viết đoạn cập nhật trạng thái kỹ thuật (70-90 từ) gửi qua Slack/Email: báo cáo nguyên nhân sự cố trong quá khứ, giải thích blocker hiện tại (tránh lỗi thì continuous) và đề xuất giải pháp nhằm 'mitigate' rủi ro.",
+          "estimated_minutes": 10,
+          "skill_target": "Stating Blockers and Present Outcomes",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    },
+    {
+      "lesson_id": "lesson-1791820100568",
+      "lesson_number": 1,
+      "date": "2026-10-12",
+      "primary_objective": "Master Past Perfect vs. Past Simple and High-Impact Engineering Collocations",
+      "reason_for_selection": "Dựa trên mục tiêu giao tiếp chuyên nghiệp, bài học tập trung củng cố thì quá khứ hoàn thành trong báo cáo kỹ thuật và từ vựng tinh gọn quy trình.",
+      "estimated_duration_minutes": 35,
+      "sections": [
+        {
+          "section": "grammar",
+          "title": "Part A — Past Perfect in Incident Reports",
+          "description": "Phân biệt hành động xảy ra trước trong quá khứ khi giải thích sự cố.",
+          "estimated_minutes": 12,
+          "skill_target": "Past Simple vs. Past Perfect",
+          "completed": false
+        },
+        {
+          "section": "vocabulary",
+          "title": "Part B — High-Impact Action Verbs",
+          "description": "Học từ \"mitigate\" & \"streamline\" kèm phát âm IPA và collocations.",
+          "estimated_minutes": 9,
+          "skill_target": "Collocations with Mitigate & Streamline",
+          "completed": false
+        },
+        {
+          "section": "reading",
+          "title": "Part C — Tech Strategy Reading",
+          "description": "Đoạn văn ngắn về cân bằng tốc độ release và technical debt.",
+          "estimated_minutes": 7,
+          "skill_target": "Reading Comprehension & Author Intent",
+          "completed": false
+        },
+        {
+          "section": "writing",
+          "title": "Part D — Workplace Communication",
+          "description": "Viết cập nhật tiến độ công việc ngắn gọn, tự nhiên.",
+          "estimated_minutes": 7,
+          "skill_target": "Clear Workplace Status Updates",
+          "completed": false
+        }
+      ],
+      "status": "in_progress"
+    }
+  ],
+  "summaries": [
+    {
+      "lesson_id": "lesson-1791819794928",
+      "lesson_number": 1,
+      "completed_at": "2026-10-12T15:46:51.555Z",
+      "primary_objective": "Master mixed conditionals for present consequences and key collocations with 'mitigate' while maintaining tense consistency in technical updates.",
+      "sections_completed": [
+        "grammar",
+        "vocabulary",
+        "reading",
+        "writing"
+      ],
+      "questions_answered": 4,
+      "accuracy_rate": 0.5,
+      "key_takeaways": [
+        "Nắm chắc thì Past Perfect khi có mốc thời gian \"By the time\" trong quá khứ.",
+        "Vận dụng thành thạo từ \"mitigate\" đi kèm các danh từ như \"risk\", \"impact\".",
+        "Viết câu cập nhật tiến độ ngắn gọn, nêu rõ vấn đề và hành động tiếp theo."
+      ],
+      "vocabulary_learned": [
+        "mitigate /ˈmɪtɪɡeɪt/",
+        "streamline /ˈstriːmlaɪn/"
+      ],
+      "recurring_mistakes_flagged": [
+        "Cần lưu ý phân biệt kết quả hiện tại trong Mixed Conditionals"
+      ],
+      "next_review_topics": [
+        "Mixed Conditionals in technical reviews",
+        "Phrasal verbs in agile standups"
+      ],
+      "learner_rating": "about_right"
+    },
+    {
+      "lesson_id": "lesson-1791820026971",
+      "lesson_number": 1,
+      "completed_at": "2026-10-12T15:47:19.032Z",
+      "primary_objective": "Master mixed conditionals for past causes with present impacts and accurately deploy collocations with 'mitigate' in tech workplace communications.",
+      "sections_completed": [
+        "grammar",
+        "vocabulary",
+        "reading",
+        "writing"
+      ],
+      "questions_answered": 4,
+      "accuracy_rate": 0.5,
+      "key_takeaways": [
+        "Nắm vững cách dùng 'get used to + V-ing' để diễn tả thói quen hoặc sự thích nghi trong công việc.",
+        "Sử dụng chuẩn xác collocation 'mitigate the impact of...' để diễn đạt việc giảm thiểu tác động tiêu cực.",
+        "Lưu ý phân biệt thứ tự thời gian giữa Past Simple và Past Perfect với mệnh đề 'By the time'."
+      ],
+      "vocabulary_learned": [
+        "mitigate the impact (giảm thiểu tác động tiêu cực)",
+        "flag critical synchronization errors (báo cáo các lỗi đồng bộ nghiêm trọng)",
+        "run into an unexpected bug (gặp phải lỗi không lường trước)"
+      ],
+      "recurring_mistakes_flagged": [
+        "Xác định nhầm hành động xảy ra trước - sau trong câu phối hợp thì (Past Simple vs. Past Perfect).",
+        "Chưa hoàn thành nội dung viết cập nhật tiến độ công việc theo đúng yêu cầu đề bài."
+      ],
+      "next_review_topics": [
+        "Thì Quá khứ hoàn thành (Past Perfect) và cấu trúc 'By the time' trong văn bản công việc",
+        "Kỹ năng viết báo cáo tiến độ và xử lý sự cố (Status Updates) ngắn gọn, chuyên nghiệp"
+      ],
+      "learner_rating": "about_right"
+    }
+  ],
+  "discoveryState": {
+    "messages": [
+      {
+        "id": "msg-1791821394418",
+        "sender": "tutor",
+        "text": "Hello! I am your personal adaptive English tutor. I will guide you with focused step-by-step questions, clear explanations, and long-term memory tracking.\n\nTo begin, what is your primary English learning goal right now?",
+        "quickReplies": [
+          "Workplace & Tech Communication",
+          "Natural Conversation",
+          "Reading & Technical Writing",
+          "Balanced Mix"
+        ],
+        "dimension": "goal",
+        "timestamp": "2026-10-12T16:09:54.418Z"
+      }
+    ],
+    "currentDimensionIndex": 1,
+    "isConfirmed": false,
+    "summary": "",
+    "profileDraft": {
+      "id": "learner-primary",
+      "name": "Learner",
+      "current_level": "B2",
+      "target_level": "C1",
+      "primary_goal": "workplace_tech",
+      "goal_summary": "Targeting C1 with focus on workplace tech. Diagnostic score: 2/3.",
+      "explanation_language": "en",
+      "general_vs_work_ratio": 65,
+      "daily_minutes": 35,
+      "days_per_week": 5,
+      "feedback_style": "encouraging",
+      "enable_audio_tips": true,
+      "onboarding_completed": true,
+      "created_at": "2026-10-12T15:36:28.493Z",
+      "updated_at": "2026-10-12T15:49:21.572Z"
+    },
+    "updatedAt": "2026-10-12T16:09:54.418Z"
+  },
+  "diagnosticSession": {
+    "sessionId": "diag-sess-1791821400964",
+    "mode": "quick",
+    "status": "in_progress",
+    "currentIndex": 1,
+    "minQuestions": 5,
+    "maxQuestions": 8,
+    "history": [],
+    "currentEstimates": {
+      "grammar": {
+        "category": "grammar",
+        "cefrRange": "B2",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [],
+        "recurringErrors": [],
+        "unassessedSubskills": []
+      },
+      "vocabulary": {
+        "category": "vocabulary",
+        "cefrRange": "B2",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [],
+        "recurringErrors": [],
+        "unassessedSubskills": []
+      },
+      "reading": {
+        "category": "reading",
+        "cefrRange": "B2",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [],
+        "recurringErrors": [],
+        "unassessedSubskills": []
+      },
+      "writing": {
+        "category": "writing",
+        "cefrRange": "B2",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [],
+        "recurringErrors": [],
+        "unassessedSubskills": []
+      },
+      "speaking": {
+        "category": "speaking",
+        "cefrRange": "Not Assessed (Optional)",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [
+          "Speech fluency requires audio session"
+        ],
+        "recurringErrors": [],
+        "unassessedSubskills": [
+          "Spoken spontaneous output",
+          "Pronunciation"
+        ]
+      },
+      "listening": {
+        "category": "listening",
+        "cefrRange": "Not Assessed (Optional)",
+        "confidence": "low",
+        "evidenceCount": 0,
+        "correctCount": 0,
+        "demonstratedStrengths": [],
+        "priorityWeaknesses": [],
+        "recurringErrors": [],
+        "unassessedSubskills": [
+          "Spoken accent comprehension"
+        ]
+      }
+    },
+    "overallCEFR": "B2",
+    "startedAt": "2026-10-12T16:10:00.964Z",
+    "lastActiveAt": "2026-10-12T16:10:00.964Z",
+    "currentQuestion": {
+      "id": "diag-gen-1791821435729-8pe2",
+      "section": "grammar",
+      "skill_id": "conditionals-mixed",
+      "skill_name": "Mixed Conditionals",
+      "question_type": "multiple_choice",
+      "difficulty": "B2",
+      "context_topic": "general",
+      "prompt": "If I ________ the project deadline yesterday, I wouldn't be so stressed about the client meeting today.",
+      "options": [
+        {
+          "id": "A",
+          "text": "had met"
+        },
+        {
+          "id": "B",
+          "text": "would have met"
+        },
+        {
+          "id": "C",
+          "text": "met"
+        },
+        {
+          "id": "D",
+          "text": "have met"
+        }
+      ],
+      "expected_answer_ids": [
+        "A"
+      ],
+      "expected_answer_text": "had met",
+      "accepted_alternatives": [
+        "had met"
+      ],
+      "hint": "Consider the time frame: the first part of the sentence refers to a past action, while the second part refers to a present state.",
+      "explanation_rule": "This is a mixed conditional (Type 3 + Type 2). We use the past perfect (had + past participle) in the 'if' clause to refer to a past event, and the conditional (would + infinitive) in the main clause to refer to a present result."
+    }
+  },
+  "diagnosticReports": []
+}

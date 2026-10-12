@@ -12,7 +12,10 @@ import {
   Sparkles,
   CheckCircle,
   Clock,
-  Layers
+  Layers,
+  Compass,
+  FileText,
+  RotateCcw
 } from 'lucide-react';
 import {
   UserProfile,
@@ -20,7 +23,9 @@ import {
   VocabularyItem,
   Attempt,
   LessonPlan,
-  DailySummary
+  DailySummary,
+  DiagnosticReport,
+  PersonalizedStudyPlan
 } from '../types/learning.ts';
 import {
   getMemory,
@@ -34,14 +39,22 @@ interface MemoryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onResetComplete: () => void;
+  onRetakeDiagnostic?: () => void;
 }
 
-export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onResetComplete }) => {
-  const [activeTab, setActiveTab] = useState<'skills' | 'vocab' | 'mistakes' | 'data'>('vocab');
+export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({
+  isOpen,
+  onClose,
+  onResetComplete,
+  onRetakeDiagnostic
+}) => {
+  const [activeTab, setActiveTab] = useState<'vocab' | 'skills' | 'plan' | 'mistakes' | 'data'>('plan');
   const [skills, setSkills] = useState<LearnerSkillState[]>([]);
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [summaries, setSummaries] = useState<DailySummary[]>([]);
+  const [diagnosticReports, setDiagnosticReports] = useState<DiagnosticReport[]>([]);
+  const [studyPlan, setStudyPlan] = useState<PersonalizedStudyPlan | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [statusMessage, setStatusMessage] = useState<string>('');
 
@@ -59,6 +72,8 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
       setVocabulary(data.vocabulary || []);
       setAttempts(data.attempts || []);
       setSummaries(data.summaries || []);
+      setDiagnosticReports(data.diagnosticReports || []);
+      setStudyPlan(data.studyPlan || null);
     } catch (err) {
       console.error('Failed to load memory:', err);
     } finally {
@@ -123,7 +138,7 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
             </div>
             <div>
               <h2 className="text-base font-bold text-white">Learner Memory & Retention</h2>
-              <p className="text-xs text-slate-400">Long-term skill tracking and spaced repetition notebook</p>
+              <p className="text-xs text-slate-400">Adaptive diagnosis, evidence-based study plan, and spaced review</p>
             </div>
           </div>
 
@@ -136,22 +151,34 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
         </div>
 
         {/* Tab navigation */}
-        <div className="flex border-b border-slate-800 px-5 text-xs font-semibold gap-4">
+        <div className="flex border-b border-slate-800 px-5 text-xs font-semibold gap-3 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab('plan')}
+            className={`py-3 border-b-2 flex items-center space-x-2 shrink-0 transition ${
+              activeTab === 'plan'
+                ? 'border-indigo-500 text-white'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-emerald-400" />
+            <span>Diagnostics & Plan</span>
+          </button>
+
           <button
             onClick={() => setActiveTab('vocab')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition ${
+            className={`py-3 border-b-2 flex items-center space-x-2 shrink-0 transition ${
               activeTab === 'vocab'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <BookMarked className="w-4 h-4 text-indigo-400" />
-            <span>Vocabulary Notebook ({vocabulary.length})</span>
+            <span>Vocabulary ({vocabulary.length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('skills')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition ${
+            className={`py-3 border-b-2 flex items-center space-x-2 shrink-0 transition ${
               activeTab === 'skills'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -163,7 +190,7 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
 
           <button
             onClick={() => setActiveTab('mistakes')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition ${
+            className={`py-3 border-b-2 flex items-center space-x-2 shrink-0 transition ${
               activeTab === 'mistakes'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -175,14 +202,14 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
 
           <button
             onClick={() => setActiveTab('data')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition ${
+            className={`py-3 border-b-2 flex items-center space-x-2 shrink-0 transition ${
               activeTab === 'data'
                 ? 'border-indigo-500 text-white'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Download className="w-4 h-4 text-amber-400" />
-            <span>Data & Privacy</span>
+            <span>Data Portability</span>
           </button>
         </div>
 
@@ -200,6 +227,102 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
             </div>
           ) : (
             <>
+              {/* TAB: DIAGNOSTICS & STUDY PLAN */}
+              {activeTab === 'plan' && (
+                <div className="space-y-4">
+                  {/* Action banner to retake diagnostic */}
+                  <div className="bg-gradient-to-r from-indigo-950/60 to-slate-800/80 border border-indigo-500/40 rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h4 className="text-sm font-bold text-white">Adaptive Diagnostic Placement</h4>
+                      <p className="text-xs text-slate-300 mt-0.5">
+                        {diagnosticReports.length > 0
+                          ? `Last calibrated: ${new Date(diagnosticReports[diagnosticReports.length - 1].completedAt).toLocaleDateString()} (${diagnosticReports[diagnosticReports.length - 1].overallCEFR})`
+                          : 'No completed diagnostic assessment yet.'}
+                      </p>
+                    </div>
+
+                    {onRetakeDiagnostic && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onRetakeDiagnostic();
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shrink-0 flex items-center space-x-1.5"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>{diagnosticReports.length > 0 ? 'Retake Assessment' : 'Take Diagnostic'}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Active Study Plan summary */}
+                  {studyPlan && (
+                    <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                          Active Personalized Study Plan
+                        </span>
+                        <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          {studyPlan.learnerApprovalStatus}
+                        </span>
+                      </div>
+
+                      <p className="text-sm font-bold text-white leading-relaxed">
+                        {studyPlan.overallObjective}
+                      </p>
+
+                      <div className="space-y-2 pt-2 border-t border-slate-700/60">
+                        <span className="text-xs font-semibold text-slate-400 block">Prioritized Focus Skills:</span>
+                        {studyPlan.prioritizedSkills.map((sk, i) => (
+                          <div key={i} className="text-xs bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center">
+                            <div>
+                              <strong className="text-slate-200">{sk.skillName}</strong>
+                              <p className="text-[11px] text-slate-400 mt-0.5">{sk.rationale}</p>
+                            </div>
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 shrink-0 ml-2">
+                              {sk.priority}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Past Diagnostic Reports History */}
+                  {diagnosticReports.length > 0 && (
+                    <div className="space-y-2.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                        Diagnostic Assessment History ({diagnosticReports.length})
+                      </span>
+
+                      {diagnosticReports.map(rep => (
+                        <div
+                          key={rep.id}
+                          className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3.5 flex items-center justify-between text-xs"
+                        >
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold text-white text-sm">{rep.overallCEFR}</span>
+                              <span className="text-[10px] uppercase font-semibold px-2 py-0.2 rounded-full bg-indigo-500/20 text-indigo-300">
+                                {rep.mode}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 block mt-0.5">
+                              {new Date(rep.completedAt).toLocaleDateString()} • {rep.totalQuestionsAnswered} items • {Math.round(rep.accuracyRate * 100)}% accuracy
+                            </span>
+                          </div>
+
+                          <div className="text-right text-[11px] text-slate-400">
+                            <span>Grammar: <strong className="text-slate-200">{rep.skillEstimates.grammar.cefrRange}</strong></span>
+                            <span className="block">Writing: <strong className="text-slate-200">{rep.skillEstimates.writing.cefrRange}</strong></span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* TAB: VOCABULARY NOTEBOOK */}
               {activeTab === 'vocab' && (
                 <div className="space-y-3">
@@ -345,7 +468,7 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
                   <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 space-y-3">
                     <h4 className="text-sm font-bold text-white">Full Data Portability</h4>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      You own your learning memory. All goals, preferences, practiced skills, vocabulary items, and error notes are stored structured and can be exported as standard JSON at any time.
+                      You own your learning memory. All goals, preferences, diagnostic reports, practiced skills, and vocabulary items are stored structured and can be exported as standard JSON at any time.
                     </p>
 
                     <div className="flex flex-wrap gap-3 pt-2">
@@ -373,7 +496,7 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({ isOpen, onClose, onR
                   <div className="bg-rose-950/20 border border-rose-800/30 rounded-2xl p-5 space-y-3">
                     <h4 className="text-sm font-bold text-rose-300">Danger Zone</h4>
                     <p className="text-xs text-slate-400">
-                      Clear all vocabulary, skill stats, and previous lesson records. This resets your learning tutor back to Day 1.
+                      Clear all vocabulary, skill stats, diagnostic assessments, and lesson records. This resets your learning tutor back to Day 1.
                     </p>
                     <button
                       onClick={handleClearMemory}
