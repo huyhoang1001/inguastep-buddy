@@ -42,6 +42,95 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
     }
   };
 
+  // Dynamically calculate routine template based on selected duration
+  const isVi = profile.explanation_language === 'vi';
+  const getRoutineForMinutes = (mins: number) => {
+    if (mins <= 12) {
+      return [
+        {
+          section: 'grammar',
+          title: isVi ? 'Khởi động & Ôn tập nhanh' : 'Warm-up & Retrieval Check',
+          minutes: 2,
+          target: isVi ? '1 câu hỏi kích hoạt trí nhớ điểm ngữ pháp then chốt' : '1 quick retrieval check'
+        },
+        {
+          section: 'vocabulary',
+          title: isVi ? 'Quy tắc trọng tâm & Luyện tập' : 'Core Concept & Focused Drill',
+          minutes: 5,
+          target: isVi ? '1 quy tắc/từ vựng + 2 câu hỏi thực hành tập trung' : '1 core rule + 2 focused practice items'
+        },
+        {
+          section: 'writing',
+          title: isVi ? 'Ứng dụng & Kiểm tra thoát bài' : 'Practical Exit Check',
+          minutes: 3,
+          target: isVi ? '1 câu hỏi tổng kết & phản hồi tức thì' : '1 exit check & immediate feedback'
+        }
+      ];
+    } else if (mins >= 25) {
+      return [
+        {
+          section: 'grammar',
+          title: isVi ? 'Xử lý lỗi sai cũ & Khởi động' : 'Error Clinic & Warm-up',
+          minutes: 4,
+          target: isVi ? '2 câu hỏi khắc phục lỗi sai hay lặp lại' : '2 review questions targeting past tricky areas'
+        },
+        {
+          section: 'grammar',
+          title: isVi ? 'Ngữ pháp chuyên sâu & Biến đổi câu' : 'In-Depth Grammar & Nuance',
+          minutes: 7,
+          target: isVi ? '3 câu hỏi: trắc nghiệm, điền từ, viết lại câu' : '3 practice rounds across diverse question types'
+        },
+        {
+          section: 'vocabulary',
+          title: isVi ? 'Từ vựng cốt lõi & Collocations tự nhiên' : 'Active Vocabulary & Collocations',
+          minutes: 7,
+          target: isVi ? 'Thẻ từ vựng IPA chi tiết + 3 câu hỏi ứng dụng thực tế' : 'Full IPA vocab card + 3 contextual application items'
+        },
+        {
+          section: 'reading',
+          title: isVi ? 'Đọc hiểu chuyên sâu & Phân tích tác giả' : 'Contextual Reading & Inference',
+          minutes: 6,
+          target: isVi ? 'Đoạn văn thực tế 150 từ + 2 câu hỏi ý chính & suy luận' : '150-word scenario passage + 2 analytical questions'
+        },
+        {
+          section: 'writing',
+          title: isVi ? 'Diễn đạt công việc thực chiến & Tổng kết' : 'Authentic Workplace Production',
+          minutes: 6,
+          target: isVi ? '2 bài tập viết thực tế kèm rubric sửa lỗi chi tiết' : '2 writing tasks with native rubric feedback'
+        }
+      ];
+    } else {
+      return [
+        {
+          section: 'grammar',
+          title: isVi ? 'Khởi động & Ôn tập củng cố' : 'Warm-up & Pattern Review',
+          minutes: 3,
+          target: isVi ? '1 câu hỏi ôn lại cấu trúc đã học' : '1 warm-up question on key patterns'
+        },
+        {
+          section: 'grammar',
+          title: isVi ? 'Ngữ pháp theo ngữ cảnh' : 'Grammar in Context',
+          minutes: 6,
+          target: isVi ? '1 quy tắc trọng tâm + 2 câu hỏi luyện tập' : '1 key concept + 2 practice questions'
+        },
+        {
+          section: 'vocabulary',
+          title: isVi ? 'Từ vựng & Collocations' : 'Vocabulary & Collocations',
+          minutes: 5,
+          target: isVi ? 'Thẻ từ vựng IPA + 2 câu hỏi chọn cặp từ tự nhiên' : 'IPA card + 2 collocation practice questions'
+        },
+        {
+          section: 'reading',
+          title: isVi ? 'Đọc hiểu & Ứng dụng thực tế' : 'Contextual Reading & Expression',
+          minutes: 6,
+          target: isVi ? '1 bài đọc ngắn 120 từ + 1 câu hỏi suy luận + 1 bài viết' : '1 reading passage + 1 comprehension + 1 writing prompt'
+        }
+      ];
+    }
+  };
+
+  const currentRoutine = getRoutineForMinutes(selectedMinutes);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-3xl w-full p-6 md:p-8 shadow-2xl text-slate-100 max-h-[92vh] overflow-y-auto space-y-6">
@@ -128,15 +217,26 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
           </div>
         </div>
 
-        {/* 4-Part Daily Lesson Routine */}
+        {/* Dynamic Daily Lesson Routine Structure */}
         <div className="space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
-            <BookOpen className="w-4 h-4 text-sky-400" />
-            <span>Flexible Daily 4-Part Structure</span>
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
+              <BookOpen className="w-4 h-4 text-sky-400" />
+              <span>
+                {selectedMinutes <= 12
+                  ? 'Quick Practice Daily Structure (10 Mins • 4 Questions)'
+                  : selectedMinutes >= 25
+                  ? 'Deep Practice Daily Structure (30 Mins • 12 Questions)'
+                  : 'Standard Practice Daily Structure (20 Mins • 7 Questions)'}
+              </span>
+            </h4>
+            <span className="text-xs text-indigo-300 font-bold">
+              ~{currentRoutine.reduce((sum, item) => sum + item.minutes, 0)} minutes total
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-            {plan.dailyRoutineTemplate.map((sec, idx) => (
+            {currentRoutine.map((sec, idx) => (
               <div
                 key={idx}
                 className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 flex items-start space-x-3"
@@ -189,21 +289,28 @@ export const StudyPlanModal: React.FC<StudyPlanModalProps> = ({
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-semibold text-slate-300">Daily Study Time:</span>
+            <span className="text-xs font-semibold text-slate-300">Choose Daily Learning Pace:</span>
           </div>
 
-          <div className="flex items-center space-x-2">
-            {[15, 20, 30].map(m => (
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { m: 10, label: '10 mins/day', sub: '⚡ Quick (4 Qs)' },
+              { m: 20, label: '20 mins/day', sub: '🎯 Standard (7 Qs)' },
+              { m: 30, label: '30 mins/day', sub: '🔬 Deep (12 Qs)' }
+            ].map(item => (
               <button
-                key={m}
-                onClick={() => setSelectedMinutes(m)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
-                  selectedMinutes === m
-                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                key={item.m}
+                onClick={() => setSelectedMinutes(item.m)}
+                className={`px-3 py-2 rounded-xl text-center border transition flex flex-col items-center justify-center ${
+                  selectedMinutes === item.m
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
                 }`}
               >
-                {m} mins/day
+                <span className="text-xs font-bold">{item.label}</span>
+                <span className={`text-[10px] ${selectedMinutes === item.m ? 'text-indigo-200' : 'text-slate-400'}`}>
+                  {item.sub}
+                </span>
               </button>
             ))}
           </div>

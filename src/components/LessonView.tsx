@@ -38,7 +38,10 @@ import {
 interface LessonViewProps {
   profile: UserProfile;
   plan: LessonPlan;
-  onFinishLesson: (attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>) => void;
+  onFinishLesson: (
+    attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>,
+    timeSpentMinutes?: number
+  ) => void;
   onOpenSummary: () => void;
 }
 
@@ -48,10 +51,12 @@ export const LessonView: React.FC<LessonViewProps> = ({
   onFinishLesson,
   onOpenSummary
 }) => {
-  // Current section navigation
+  // Current section & question navigation
   const [currentSectionIndex, setCurrentSectionIndex] = useState<number>(0);
+  const [questionIndexInSection, setQuestionIndexInSection] = useState<number>(0);
   const activeSectionPlan = plan.sections[currentSectionIndex] || plan.sections[0];
   const currentSection = activeSectionPlan.section;
+  const targetQuestionsInSection = activeSectionPlan.target_questions_count || 1;
 
   // Question & State
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
@@ -59,6 +64,9 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null);
+
+  // Questions completed per section: sectionIndex -> completed count
+  const [sectionProgress, setSectionProgress] = useState<Record<number, number>>({});
 
   // Lesson attempts accumulation
   const [lessonAttempts, setLessonAttempts] = useState<
@@ -77,6 +85,22 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
 
+  // Active session timer
+  const [secondsElapsed, setSecondsElapsed] = useState<number>(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsElapsed(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
   // Check speech recognition capability
   useEffect(() => {
     if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
@@ -84,20 +108,28 @@ export const LessonView: React.FC<LessonViewProps> = ({
     }
   }, []);
 
-  // Fetch question whenever section changes
+  // Fetch question whenever section or question index changes
   useEffect(() => {
-    loadNextQuestionForSection(currentSection);
-  }, [currentSectionIndex]);
+    loadQuestionForSection(currentSectionIndex, questionIndexInSection);
+  }, [currentSectionIndex, questionIndexInSection]);
 
-  const loadNextQuestionForSection = async (section: SectionType) => {
+  const loadQuestionForSection = async (sectionIdx: number, qIdx: number) => {
     setIsLoadingQuestion(true);
     setEvaluation(null);
     setUserAnswer('');
     setTutorAssistData(null);
     setShowHint(false);
 
+    const secPlan = plan.sections[sectionIdx] || plan.sections[0];
     try {
-      const q = await generateQuestion(section, activeSectionPlan.skill_target);
+      const q = await generateQuestion(
+        secPlan.section,
+        secPlan.skill_target,
+        undefined,
+        secPlan.activity_type,
+        qIdx,
+        secPlan.target_questions_count || 1
+      );
       setCurrentQuestion(q);
     } catch (err) {
       console.error('Failed to load question:', err);
@@ -123,6 +155,15 @@ export const LessonView: React.FC<LessonViewProps> = ({
           userAnswer
         }
       ]);
+
+      // Record section progress count
+      setSectionProgress(prev => ({
+        ...prev,
+        [currentSectionIndex]: Math.min(
+          targetQuestionsInSection,
+          (prev[currentSectionIndex] || 0) + 1
+        )
+      }));
     } catch (err) {
       console.error('Failed to evaluate answer:', err);
     } finally {
@@ -148,14 +189,27 @@ export const LessonView: React.FC<LessonViewProps> = ({
   };
 
   const handleNextQuestionOrSection = () => {
-    // If not all sections completed, advance to next section
     const activeSections = isShortSession ? plan.sections.slice(0, 2) : plan.sections;
-    if (currentSectionIndex < activeSections.length - 1) {
+    const isLastQ = questionIndexInSection >= targetQuestionsInSection - 1;
+    const isLastSec = currentSectionIndex >= activeSections.length - 1;
+
+    if (!isLastQ) {
+      // Advance to next question within the same activity/section
+      setQuestionIndexInSection(prev => prev + 1);
+    } else if (!isLastSec) {
+      // Advance to next section/activity
       setCurrentSectionIndex(prev => prev + 1);
+      setQuestionIndexInSection(0);
     } else {
       // Done with all planned sections
-      onFinishLesson(lessonAttempts);
+      const timeSpent = Math.max(1, Math.round(secondsElapsed / 60));
+      onFinishLesson(lessonAttempts, timeSpent);
     }
+  };
+
+  const handleFinishEarly = () => {
+    const timeSpent = Math.max(1, Math.round(secondsElapsed / 60));
+    onFinishLesson(lessonAttempts, timeSpent);
   };
 
   const handleRetryQuestion = () => {
@@ -203,75 +257,142 @@ export const LessonView: React.FC<LessonViewProps> = ({
     return matches ? matches.length : 1;
   };
 
+  const activeSections = isShortSession ? plan.sections.slice(0, 2) : plan.sections;
+  const totalPlannedQuestions = activeSections.reduce(
+    (sum, s) => sum + (s.target_questions_count || 1),
+    0
+  );
+  const totalAnsweredCount = lessonAttempts.length;
+  const progressPercent = Math.min(
+    100,
+    Math.round((totalAnsweredCount / (totalPlannedQuestions || 1)) * 100)
+  );
+  const durationTarget = plan.estimated_duration_minutes || profile.daily_minutes || 20;
+  const paceMode = plan.session_pace_mode || (durationTarget <= 12 ? 'quick_10' : durationTarget >= 25 ? 'deep_30' : 'standard_20');
+
   const getSectionTitle = (type: SectionType) => {
-    switch (type) {
-      case 'grammar': return 'Part A — Grammar in Context';
-      case 'vocabulary': return 'Part B — Vocabulary & Collocations';
-      case 'reading': return 'Part C — Reading & Inference';
-      case 'writing': return 'Part D — Writing & Expression';
-    }
+    return activeSectionPlan.title || `Part ${currentSectionIndex + 1} — ${type.toUpperCase()}`;
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      {/* Top lesson control bar */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
-        {/* Section Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          {(isShortSession ? plan.sections.slice(0, 2) : plan.sections).map((sec, idx) => {
+      {/* Top lesson pace & duration banner */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-lg space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-3">
+            <span className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center space-x-1.5 ${
+              paceMode === 'quick_10'
+                ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                : paceMode === 'deep_30'
+                ? 'bg-purple-500/10 border-purple-500/30 text-purple-300'
+                : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
+            }`}>
+              <span>
+                {paceMode === 'quick_10'
+                  ? '⚡ 10-Min Quick Practice'
+                  : paceMode === 'deep_30'
+                  ? '🔬 30-Min Deep Practice'
+                  : '🎯 20-Min Standard Practice'}
+              </span>
+            </span>
+
+            <div className="flex items-center space-x-1 text-xs text-slate-300 font-medium bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-700/60">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1" />
+              <span>{formatTimer(secondsElapsed)}</span>
+              <span className="text-slate-500">/ ~{durationTarget}m target</span>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsShortSession(!isShortSession)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${
+                isShortSession
+                  ? 'bg-amber-950/40 border-amber-600/60 text-amber-300'
+                  : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white'
+              }`}
+              title="Toggle shortened 2-part session"
+            >
+              {isShortSession ? '⚡ Shortened (Active)' : '⚡ Shorten today'}
+            </button>
+
+            <button
+              onClick={handleFinishEarly}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+              title="Pause and complete lesson now"
+            >
+              <PauseCircle className="w-3.5 h-3.5" />
+              <span>Finish early</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Global Progress Bar */}
+        <div className="space-y-1.5">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-slate-400 font-medium">
+              Activity {currentSectionIndex + 1} of {activeSections.length}:{' '}
+              <strong className="text-white">{activeSectionPlan.title}</strong>
+            </span>
+            <span className="text-indigo-300 font-bold">
+              Question {Math.min(totalPlannedQuestions, totalAnsweredCount + (evaluation ? 0 : 1))} of {totalPlannedQuestions} ({progressPercent}%)
+            </span>
+          </div>
+          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-indigo-500 to-sky-400 h-full rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Section Tabs with Questions Completed Badges */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+          {activeSections.map((sec, idx) => {
             const isActive = idx === currentSectionIndex;
-            const isDone = idx < currentSectionIndex;
+            const targetCount = sec.target_questions_count || 1;
+            const doneCount = sectionProgress[idx] || 0;
+            const isSecDone = doneCount >= targetCount;
+
             return (
               <button
-                key={sec.section}
+                key={idx}
                 onClick={() => {
-                  if (idx <= currentSectionIndex || evaluation) {
+                  if (idx !== currentSectionIndex) {
                     setCurrentSectionIndex(idx);
+                    setQuestionIndexInSection(0);
                   }
                 }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-2 transition ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                    : isDone
+                    : isSecDone
                     ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-800/40'
                     : 'bg-slate-800/60 text-slate-400 border border-slate-700/40 hover:text-slate-200'
                 }`}
               >
-                {isDone ? (
+                {isSecDone ? (
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
                 ) : (
                   <span className="w-4 h-4 rounded-full bg-slate-700/80 flex items-center justify-center text-[10px]">
                     {idx + 1}
                   </span>
                 )}
-                <span className="capitalize">{sec.section}</span>
+                <span>{sec.title.split('—')[1] ? sec.title.split('—')[1].trim() : sec.title}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                    isActive
+                      ? 'bg-indigo-700 text-indigo-100'
+                      : isSecDone
+                      ? 'bg-emerald-900/60 text-emerald-300'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}
+                >
+                  {doneCount}/{targetCount}
+                </span>
               </button>
             );
           })}
-        </div>
-
-        {/* Short session toggle & finish early */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setIsShortSession(!isShortSession)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition ${
-              isShortSession
-                ? 'bg-amber-950/40 border-amber-600/60 text-amber-300'
-                : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:text-white'
-            }`}
-            title="Switch to a 2-part quick lesson today"
-          >
-            {isShortSession ? '⚡ Short Session (Active)' : '⚡ Short session today'}
-          </button>
-
-          <button
-            onClick={() => onFinishLesson(lessonAttempts)}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
-            title="Pause and view summary without losing progress"
-          >
-            <PauseCircle className="w-3.5 h-3.5" />
-            <span>Finish early</span>
-          </button>
         </div>
       </div>
 
@@ -687,9 +808,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
                   className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold transition shadow-lg shadow-indigo-600/30 flex items-center space-x-2"
                 >
                   <span>
-                    {currentSectionIndex < (isShortSession ? 1 : plan.sections.length - 1)
-                      ? 'Next Section →'
-                      : 'Finish Today\'s Lesson →'}
+                    {questionIndexInSection < targetQuestionsInSection - 1
+                      ? `Next Question in Part ${currentSectionIndex + 1} (${questionIndexInSection + 2}/${targetQuestionsInSection}) →`
+                      : currentSectionIndex < activeSections.length - 1
+                      ? `Next Activity: ${activeSections[currentSectionIndex + 1]?.title.split('—')[1] ? activeSections[currentSectionIndex + 1]?.title.split('—')[1].trim() : activeSections[currentSectionIndex + 1]?.title} →`
+                      : 'Complete Lesson & View Summary 🎉'}
                   </span>
                   <ArrowRight className="w-4 h-4" />
                 </button>

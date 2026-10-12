@@ -401,5 +401,293 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
       hint: 'Sử dụng cấu trúc: "I have opened a PR for...", "Unit test coverage has been updated to...", "Please take a look when you have a moment."',
       explanation_rule: 'Sử dụng Present Perfect (have opened/added) cho công việc vừa hoàn thành và lời đề nghị lịch sự (Could you please review...).'
     }
+  },
+  {
+    id: 'write-b2-client-delay-1',
+    section: 'writing',
+    skill_id: 'workplace_delay_notice',
+    skill_name: 'Transparent Client Delay Notification',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-delay-1',
+      section: 'writing',
+      skill_id: 'workplace_delay_notice',
+      skill_name: 'Transparent Client Delay Notification',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Khi phải thông báo chậm trễ tiến độ cho khách hàng hoặc bên liên quan, cần giữ thái độ chuyên nghiệp, giải thích ngắn gọn nguyên nhân kỹ thuật và đưa ra cam kết mới khả thi.',
+      prompt: 'Write 2 to 3 sentences informing an external client that the scheduled milestone demo will be postponed by 24 hours to ensure thorough data validation.',
+      hint: 'Mẫu câu gợi ý: "Due to additional validation checks on our latest build, we would like to reschedule...", "We want to ensure everything runs smoothly, so the new demo time will be tomorrow at..."',
+      explanation_rule: 'Tập trung vào từ ngữ lịch sự (reschedule, ensure stability), giải thích nguyên nhân tích cực (data validation) và đưa ra mốc thời gian rõ ràng.'
+    }
+  },
+  {
+    id: 'write-b2-postmortem-1',
+    section: 'writing',
+    skill_id: 'workplace_postmortem_action',
+    skill_name: 'Post-Mortem Preventative Action Item',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-write-postmortem-1',
+      section: 'writing',
+      skill_id: 'workplace_postmortem_action',
+      skill_name: 'Post-Mortem Preventative Action Item',
+      question_type: 'free_writing',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Trong tài liệu Post-mortem sau sự cố hệ thống, phần Action Items cần cụ thể: ai làm gì, công cụ nào, và ngăn chặn lỗi tái diễn như thế nào.',
+      prompt: 'Write 2 sentences proposing an engineering preventative measure following a production outage caused by an unhandled database timeout.',
+      hint: 'Mẫu câu gợi ý: "To prevent similar timeouts in production, we will implement exponential backoff retry logic...", "Additionally, alerting thresholds on database latency will be tightened to notify on-call engineers earlier."',
+      explanation_rule: 'Sử dụng các cụm từ hành động dứt khoát: "we will implement...", "to prevent recurrence...", "thresholds will be calibrated...".'
+    }
+  },
+
+  // --- ADDITIONAL RICH GRAMMAR ITEMS ---
+  {
+    id: 'gram-b2-modals-deduction-1',
+    section: 'grammar',
+    skill_id: 'modals_of_deduction_past',
+    skill_name: 'Modals of Deduction in the Past',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-modal-ded-1',
+      section: 'grammar',
+      skill_id: 'modals_of_deduction_past',
+      skill_name: 'Modals of Deduction in the Past',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Dùng "must have + V3" khi gần như chắc chắn điều gì đã xảy ra trong quá khứ dựa trên bằng chứng cụ thể. Dùng "can\'t / couldn\'t have + V3" khi điều đó là bất khả thi.',
+      prompt: 'The server crashed immediately after the midnight deploy. Looking at the error stack, the database migration ____ properly before traffic surged.',
+      options: [
+        { id: 'A', text: 'must not have run' },
+        { id: 'B', text: 'should have run' },
+        { id: 'C', text: 'would not run' },
+        { id: 'D', text: 'might not run' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'must not have run',
+      accepted_alternatives: ['must not have run', 'cannot have run'],
+      hint: 'Dựa trên bằng chứng lỗi (error stack), người nói đưa ra kết luận gần như chắc chắn về việc migration đã không được chạy.',
+      explanation_rule: 'Dùng "must not have + V3" để suy đoán chắc chắn về một sự việc không diễn ra trong quá khứ dựa trên bằng chứng rõ ràng.'
+    }
+  },
+  {
+    id: 'gram-b2-subjunctive-1',
+    section: 'grammar',
+    skill_id: 'subjunctive_recommendations',
+    skill_name: 'Subjunctive in Formal Directives',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-subj-1',
+      section: 'grammar',
+      skill_id: 'subjunctive_recommendations',
+      skill_name: 'Subjunctive in Formal Directives',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Sau các tính từ hoặc động từ mang tính yêu cầu/khuyến nghị (crucial, essential, vital, recommend that), mệnh đề theo sau dùng động từ nguyên mẫu không chia (bare infinitive).',
+      prompt: 'It is essential that every backend developer ____ the multi-factor authentication protocol before accessing staging environments.',
+      options: [
+        { id: 'A', text: 'follow' },
+        { id: 'B', text: 'follows' },
+        { id: 'C', text: 'followed' },
+        { id: 'D', text: 'is following' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'follow',
+      accepted_alternatives: ['follow'],
+      hint: 'Cấu trúc giả định thức hiện tại (Present Subjunctive): "It is essential that + S + V(nguyên thể không to)". Dù chủ ngữ là số ít, động từ vẫn không thêm -s.',
+      explanation_rule: 'Quy tắc: It is essential/crucial/vital that + S + V(bare infinitive). Do đó chọn "follow" thay vì "follows".'
+    }
+  },
+  {
+    id: 'gram-b2-cleft-emphasis-1',
+    section: 'grammar',
+    skill_id: 'cleft_sentences_emphasis',
+    skill_name: 'Cleft Sentences for Precision',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-cleft-1',
+      section: 'grammar',
+      skill_id: 'cleft_sentences_emphasis',
+      skill_name: 'Cleft Sentences for Precision',
+      question_type: 'fill_in_blank',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      concept_intro: 'Dùng cấu trúc câu chẻ "It was [X] that/which [Y]" để nhấn mạnh chính xác yếu tố cốt lõi gây ra kết quả.',
+      prompt: 'Complete the cleft sentence to emphasize that misconfigured environment variables triggered the issue:\n"It ________________ misconfigured environment variables that triggered the build failure, not code syntax."',
+      expected_answer_text: 'was',
+      accepted_alternatives: ['was', 'is'],
+      hint: 'Sự việc xảy ra trong quá khứ ("triggered"). Cấu trúc câu chẻ bắt đầu bằng "It + be..."',
+      explanation_rule: 'Cấu trúc Cleft sentence quá khứ: "It was + [thành phần nhấn mạnh] + that + V(past)".'
+    }
+  },
+
+  // --- ADDITIONAL RICH VOCABULARY ITEMS ---
+  {
+    id: 'vocab-b2-tradeoff',
+    section: 'vocabulary',
+    skill_id: 'collocation_tradeoff',
+    skill_name: 'Collocations with Trade-off',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-tradeoff',
+      section: 'vocabulary',
+      skill_id: 'collocation_tradeoff',
+      skill_name: 'Collocations with Trade-off',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'trade-off',
+        part_of_speech: 'noun',
+        ipa: '/ˈtreɪd.ɒf/',
+        pronunciation_tip: 'Trọng âm ở âm đầu TRADE-off. Nối âm /d/ sang /ɒ/.',
+        meaning: 'sự đánh đổi, sự thoả hiệp giữa hai mục tiêu đối nghịch nhau (ví dụ tốc độ vs độ an toàn)',
+        collocation_pattern: 'make / evaluate / balance a trade-off between X and Y',
+        example_general: 'Choosing to live downtown involves a trade-off between higher rent and shorter commute times.',
+        example_workplace: 'Architects must carefully evaluate the trade-off between memory footprint and execution latency.',
+        similar_word_comparison: {
+          word: 'compromise',
+          difference: '"compromise" thường mang sắc thái nhượng bộ hai bên; "trade-off" là sự cân nhắc kỹ thuật khách quan giữa hai thông số đối nghịch.'
+        }
+      },
+      prompt: 'Select the most natural phrase:\n"In distributed systems, there is an inherent ____ between instant consistency and high availability."',
+      options: [
+        { id: 'A', text: 'trade-off' },
+        { id: 'B', text: 'trade-in' },
+        { id: 'C', text: 'turn-around' },
+        { id: 'D', text: 'takeover' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'trade-off',
+      accepted_alternatives: ['trade-off', 'tradeoff'],
+      hint: 'Khái niệm đánh đổi giữa hai yếu tố (consistency và availability) trong định lý CAP.',
+      explanation_rule: '"an inherent trade-off between A and B" là cụm từ học thuật và kỹ thuật chuẩn xác.'
+    }
+  },
+  {
+    id: 'vocab-b2-discrepancy',
+    section: 'vocabulary',
+    skill_id: 'collocation_discrepancy',
+    skill_name: 'Collocations with Discrepancy',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-discrepancy',
+      section: 'vocabulary',
+      skill_id: 'collocation_discrepancy',
+      skill_name: 'Collocations with Discrepancy',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'discrepancy',
+        part_of_speech: 'noun',
+        ipa: '/dɪˈskrep.ən.si/',
+        pronunciation_tip: 'Trọng âm rơi vào âm thứ hai: dis-CREP-an-cy.',
+        meaning: 'sự sai khác, bất đồng không lý giải được giữa hai dữ liệu, con số hoặc bản ghi đáng lẽ phải trùng khớp',
+        collocation_pattern: 'notice / resolve / identify a discrepancy between X and Y',
+        example_general: 'There was a noticeable discrepancy between the bank statement and her actual receipts.',
+        example_workplace: 'The QA team flagged an unexpected discrepancy between staging analytics and live production numbers.',
+        similar_word_comparison: {
+          word: 'difference',
+          difference: '"difference" chỉ sự khác biệt chung; "discrepancy" nhấn mạnh vào sai lệch bất thường cần được điều tra nguyên nhân.'
+        }
+      },
+      prompt: 'Choose the best word to describe an unexplained variance between recorded data sets:\n"During reconciliation, finance spotted a notable ____ between the invoice totals and the payment logs."',
+      options: [
+        { id: 'A', text: 'discrepancy' },
+        { id: 'B', text: 'allegation' },
+        { id: 'C', text: 'redundancy' },
+        { id: 'D', text: 'substitute' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'discrepancy',
+      accepted_alternatives: ['discrepancy'],
+      hint: 'Từ nào mang nghĩa sự chênh lệch hoặc sai khác bất thường giữa hai số liệu?',
+      explanation_rule: '"a discrepancy between X and Y" là từ chuyên ngành chỉ sai lệch số liệu cần đối chiếu và xử lý.'
+    }
+  },
+  {
+    id: 'vocab-b2-robust',
+    section: 'vocabulary',
+    skill_id: 'collocation_robust',
+    skill_name: 'Collocations with Robust',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-robust',
+      section: 'vocabulary',
+      skill_id: 'collocation_robust',
+      skill_name: 'Collocations with Robust',
+      question_type: 'fill_in_blank',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      vocab_card: {
+        word: 'robust',
+        part_of_speech: 'adjective',
+        ipa: '/roʊˈbʌst/',
+        pronunciation_tip: 'Trọng âm rơi vào âm thứ hai: ro-BUST. Âm đuôi /st/ phát âm rõ.',
+        meaning: 'vững chắc, có khả năng chịu tải tốt và không dễ bị lỗi khi gặp điều kiện bất lợi',
+        collocation_pattern: 'robust architecture / testing suite / solution / security',
+        example_general: 'A robust economy can recover quickly from seasonal downturns.',
+        example_workplace: 'We need to engineer a robust caching mechanism to withstand sudden traffic spikes.',
+        similar_word_comparison: {
+          word: 'strong',
+          difference: '"strong" chỉ sức mạnh nói chung; "robust" đặc biệt mô tả hệ thống kiên cố, bền bỉ và có khả năng chống chịu lỗi ngoại cảnh.'
+        }
+      },
+      prompt: 'Fill in the blank with the appropriate adjective meaning sturdy and resilient under pressure:\n"To handle millions of concurrent requests, our team built a highly _________ data processing pipeline."',
+      expected_answer_text: 'robust',
+      accepted_alternatives: ['robust', 'resilient'],
+      hint: 'Bắt đầu bằng chữ "r". Thường dùng để chỉ kiến trúc hệ thống hoặc giải pháp bền bỉ chịu tải.',
+      explanation_rule: '"a robust pipeline / architecture" là collocation chuẩn quốc tế trong thiết kế phần mềm.'
+    }
+  },
+
+  // --- ADDITIONAL RICH READING ITEMS ---
+  {
+    id: 'read-b2-codereview-1',
+    section: 'reading',
+    skill_id: 'reading_code_review_culture',
+    skill_name: 'Code Review Culture & Constructive Tone',
+    difficulty: 'B2',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-read-review-1',
+      section: 'reading',
+      skill_id: 'reading_code_review_culture',
+      skill_name: 'Code Review Culture & Constructive Tone',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Fostering Psychological Safety in Code Reviews',
+        word_count: 135,
+        topic: 'Engineering Collaboration',
+        text: 'Code reviews are frequently perceived as technical gatekeeping, yet their primary impact is cultural. When senior engineers formulate comments as blunt directives—such as "This is wrong, change it"—they unintentionally create defensiveness and discourage junior engineers from taking creative initiative. Conversely, high-performing engineering cultures establish review norms rooted in inquiry and empathy. Reviewers phrase feedback as collaborative questions: "Have we considered how this function behaves when the payload is null?" or "What would happen if we decoupled the validation layer here?" By shifting from critique of the author to objective exploration of the codebase, teams protect psychological safety. Consequently, junior engineers ask for feedback earlier, reducing costly architectural revisions before production releases.'
+      },
+      prompt: 'According to the author, how does phrasing review feedback as collaborative questions benefit engineering teams?',
+      options: [
+        { id: 'A', text: 'It speeds up merge times by bypassing standard security validations' },
+        { id: 'B', text: 'It creates psychological safety and encourages engineers to seek feedback earlier' },
+        { id: 'C', text: 'It transfers responsibility for code quality entirely to senior staff' },
+        { id: 'D', text: 'It eliminates the need for unit tests before submitting pull requests' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'It creates psychological safety and encourages engineers to seek feedback earlier',
+      accepted_alternatives: ['B'],
+      hint: 'Nhìn vào câu: "By shifting from critique of the author to objective exploration... junior engineers ask for feedback earlier..."',
+      explanation_rule: 'Đoạn văn kết luận: "By shifting from critique of the author to objective exploration... teams protect psychological safety. Consequently, junior engineers ask for feedback earlier".'
+    }
   }
 ];

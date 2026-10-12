@@ -82,12 +82,15 @@ export async function generateLessonPlan(): Promise<LessonPlan> {
 export async function generateQuestion(
   section: SectionType,
   skillName?: string,
-  contextTopic?: 'general' | 'workplace_tech'
+  contextTopic?: 'general' | 'workplace_tech',
+  activityType?: string,
+  questionIndex?: number,
+  totalInActivity?: number
 ): Promise<Question> {
   const res = await fetch('/api/lesson/question', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ section, skillName, contextTopic })
+    body: JSON.stringify({ section, skillName, contextTopic, activityType, questionIndex, totalInActivity })
   });
   if (!res.ok) throw new Error('Failed to generate question');
   return res.json();
@@ -122,12 +125,13 @@ export async function requestTutorAssist(
 
 export async function generateLessonSummary(
   lesson: LessonPlan,
-  attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>
+  attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>,
+  timeSpentMinutes?: number
 ): Promise<DailySummary> {
   const res = await fetch('/api/lesson/summary', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ lesson, attempts })
+    body: JSON.stringify({ lesson, attempts, timeSpentMinutes })
   });
   if (!res.ok) throw new Error('Failed to generate lesson summary');
   return res.json();

@@ -547,9 +547,17 @@ app.post('/api/lesson/plan', async (req: Request, res: Response) => {
 
 app.post('/api/lesson/question', async (req: Request, res: Response) => {
   try {
-    const { section, skillName, contextTopic } = req.body;
+    const { section, skillName, contextTopic, activityType, questionIndex, totalInActivity } = req.body;
     const profile = store.getProfile();
-    const question = await aiService.generateQuestion(section, profile, skillName, contextTopic);
+    const question = await aiService.generateQuestion(
+      section,
+      profile,
+      skillName,
+      contextTopic,
+      activityType,
+      questionIndex,
+      totalInActivity
+    );
     
     // Automatically register vocab card
     if (question.vocab_card) {
@@ -617,9 +625,9 @@ app.post('/api/lesson/tutor-assist', async (req: Request, res: Response) => {
 
 app.post('/api/lesson/summary', async (req: Request, res: Response) => {
   try {
-    const { lesson, attempts } = req.body;
+    const { lesson, attempts, timeSpentMinutes } = req.body;
     const profile = store.getProfile();
-    const summary = await aiService.generateLessonSummary(lesson, attempts, profile);
+    const summary = await aiService.generateLessonSummary(lesson, attempts, profile, timeSpentMinutes);
     store.saveSummary(summary);
     res.json(summary);
   } catch (err: any) {

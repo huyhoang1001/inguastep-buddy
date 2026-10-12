@@ -155,6 +155,14 @@ export interface Attempt {
   created_at: string;
 }
 
+export type ActivityType = 
+  | 'warmup_review' 
+  | 'concept_practice' 
+  | 'vocab_acquisition' 
+  | 'reading_analysis' 
+  | 'writing_production' 
+  | 'exit_synthesis';
+
 export interface LessonSectionPlan {
   section: SectionType;
   title: string;
@@ -162,6 +170,9 @@ export interface LessonSectionPlan {
   estimated_minutes: number;
   skill_target: string;
   completed: boolean;
+  activity_type?: ActivityType;
+  target_questions_count: number;
+  completed_questions_count?: number;
 }
 
 export interface LessonPlan {
@@ -170,7 +181,9 @@ export interface LessonPlan {
   date: string;
   primary_objective: string;
   reason_for_selection: string;
-  estimated_duration_minutes: number;
+  estimated_duration_minutes: number; // 10, 20, or 30
+  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
+  total_planned_questions: number; // e.g. 4 for 10m, 7 for 20m, 12 for 30m
   sections: LessonSectionPlan[];
   status: 'planned' | 'in_progress' | 'completed' | 'paused';
 }
@@ -182,6 +195,10 @@ export interface DailySummary {
   primary_objective: string;
   sections_completed: SectionType[];
   questions_answered: number;
+  total_planned_questions?: number;
+  time_spent_minutes?: number;
+  target_duration_minutes?: number;
+  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
   accuracy_rate: number;
   key_takeaways: string[];
   vocabulary_learned: string[];

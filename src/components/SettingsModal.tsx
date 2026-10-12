@@ -142,17 +142,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <strong className="text-indigo-300">{dailyMinutes} minutes / day</strong>
             </div>
             <div className="grid grid-cols-3 gap-2">
-              {[10, 20, 35].map(m => (
+              {[
+                { mins: 10, label: '10 mins', sub: 'Quick (4 Qs)' },
+                { mins: 20, label: '20 mins', sub: 'Standard (7 Qs)' },
+                { mins: 30, label: '30 mins', sub: 'Deep (12 Qs)' }
+              ].map(opt => (
                 <button
-                  key={m}
-                  onClick={() => setDailyMinutes(m)}
-                  className={`py-2 rounded-xl border text-xs font-medium transition ${
-                    dailyMinutes === m
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-800/60 border-slate-700 text-slate-300'
+                  key={opt.mins}
+                  onClick={() => setDailyMinutes(opt.mins)}
+                  className={`p-2 rounded-xl border text-center transition flex flex-col items-center justify-center ${
+                    dailyMinutes === opt.mins
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                      : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600'
                   }`}
                 >
-                  {m} mins
+                  <span className="text-xs font-bold">{opt.label}</span>
+                  <span className={`text-[10px] ${dailyMinutes === opt.mins ? 'text-indigo-200' : 'text-slate-400'}`}>
+                    {opt.sub}
+                  </span>
                 </button>
               ))}
             </div>

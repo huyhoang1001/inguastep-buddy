@@ -53,17 +53,47 @@ export const LessonSummaryModal: React.FC<LessonSummaryModalProps> = ({
           </p>
         </div>
 
-        {/* Score & Sections practiced */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
-            <span className="text-xs text-slate-400 block mb-0.5">Questions Completed</span>
-            <strong className="text-lg font-bold text-emerald-400">{summary.questions_answered}</strong>
+        {/* Session Pace Badge */}
+        <div className="flex items-center justify-center">
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${
+            summary.session_pace_mode === 'quick_10' || summary.target_duration_minutes === 10
+              ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              : summary.session_pace_mode === 'deep_30' || summary.target_duration_minutes === 30
+              ? 'bg-purple-500/10 border-purple-500/30 text-purple-300'
+              : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
+          }`}>
+            {summary.session_pace_mode === 'quick_10' || summary.target_duration_minutes === 10
+              ? '⚡ Quick Practice Session (10 Mins)'
+              : summary.session_pace_mode === 'deep_30' || summary.target_duration_minutes === 30
+              ? '🔬 Deep Practice Session (30 Mins)'
+              : '🎯 Standard Practice Session (20 Mins)'}
+          </span>
+        </div>
+
+        {/* Score & Time & Questions */}
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+            <span className="text-[11px] text-slate-400 block mb-0.5">Time Spent</span>
+            <strong className="text-base font-bold text-amber-300">
+              {summary.time_spent_minutes || summary.target_duration_minutes || 20}m
+            </strong>
+            <span className="text-[10px] text-slate-500 block">/ {summary.target_duration_minutes || 20}m target</span>
           </div>
-          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3">
-            <span className="text-xs text-slate-400 block mb-0.5">Accuracy Rate</span>
-            <strong className="text-lg font-bold text-sky-400">
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+            <span className="text-[11px] text-slate-400 block mb-0.5">Questions</span>
+            <strong className="text-base font-bold text-emerald-400">
+              {summary.questions_answered}
+            </strong>
+            <span className="text-[10px] text-slate-500 block">
+              / {summary.total_planned_questions || summary.questions_answered} planned
+            </span>
+          </div>
+          <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 text-center">
+            <span className="text-[11px] text-slate-400 block mb-0.5">Accuracy</span>
+            <strong className="text-base font-bold text-sky-400">
               {Math.round(summary.accuracy_rate * 100)}%
             </strong>
+            <span className="text-[10px] text-slate-500 block">first attempt</span>
           </div>
         </div>
 

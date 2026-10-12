@@ -70,6 +70,13 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
                 {profile.current_level}
               </span>
+              <button
+                onClick={onOpenSettings}
+                title="Click to adjust your daily study duration"
+                className="cursor-pointer text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700/80 hover:border-indigo-500/60 hover:text-white transition flex items-center space-x-1"
+              >
+                <span>⏱️ {profile.daily_minutes || 20}m/day</span>
+              </button>
             </div>
             <p className="text-[11px] text-slate-400 hidden lg:block">
               Adaptive English Tutor • 1 Question at a Time

@@ -110,12 +110,13 @@ export default function App() {
   };
 
   const handleLessonFinished = async (
-    attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>
+    attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>,
+    timeSpentMinutes?: number
   ) => {
     if (!activePlan) return;
     setIsLoading(true);
     try {
-      const summary = await generateLessonSummary(activePlan, attempts);
+      const summary = await generateLessonSummary(activePlan, attempts, timeSpentMinutes);
       setActiveSummary(summary);
       setShowSummaryModal(true);
 
@@ -242,7 +243,21 @@ export default function App() {
         profile={profile}
         isOpen={showSettingsModal}
         onClose={() => setShowSettingsModal(false)}
-        onUpdated={updated => setProfile(updated)}
+        onUpdated={async (updated) => {
+          const durationChanged = updated.daily_minutes !== profile.daily_minutes;
+          setProfile(updated);
+          if (durationChanged) {
+            setIsLoading(true);
+            try {
+              const newPlan = await generateLessonPlan();
+              setActivePlan(newPlan);
+            } catch (err) {
+              console.error('Failed to regenerate lesson plan for new duration:', err);
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }}
         onRetakeOnboarding={() => {
           setOnboardingPhase('discovery');
           setShowOnboarding(true);
