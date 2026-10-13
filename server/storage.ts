@@ -118,7 +118,7 @@ export const INITIAL_VOCABULARY: VocabularyItem[] = [
       word: 'alleviate',
       difference: 'alleviate thường dùng cho nỗi đau, triệu chứng bệnh; mitigate thường dùng cho rủi ro, tổn thất hoặc thiệt hại.'
     },
-    review_stage: 2,
+    review_stage: 3,
     next_review_at: new Date(Date.now() + 86400000 * 2).toISOString(),
     first_seen_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     last_reviewed_at: new Date().toISOString(),
@@ -241,18 +241,6 @@ export class MultiUserMemoryStore {
     }
   }
 
-  public getDefaultUserId(): string {
-    const firstKey = this.users.keys().next().value;
-    return firstKey || 'learner-primary';
-  }
-
-  public resolveUserId(userId?: string): string {
-    if (typeof userId === 'string' && userId.trim()) {
-      return userId.trim();
-    }
-    return this.getDefaultUserId();
-  }
-
   public getOrCreateUser(account: UserAccount): UserLearningData {
     let userData = this.users.get(account.id);
     if (!userData) {
@@ -286,37 +274,23 @@ export class MultiUserMemoryStore {
     return userData;
   }
 
-  private ensureUser(userId?: string): UserLearningData {
-    const id = this.resolveUserId(userId);
-    let u = this.users.get(id);
-    if (!u) {
-      const defaultAccount: UserAccount = {
-        id,
-        email: `${id}@learner.local`,
-        name: 'Learner',
-        authProvider: id.startsWith('google_') ? 'google' : 'guest',
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString()
-      };
-      u = this.getOrCreateUser(defaultAccount);
-    }
-    return u;
-  }
-
   // Profile
-  public getProfile(userId?: string): UserProfile {
-    const u = this.ensureUser(userId);
+  public getProfile(userId: string): UserProfile {
+    const u = this.users.get(userId);
+    if (!u) {
+      return { ...DEFAULT_PROFILE, id: userId };
+    }
     return { ...u.profile };
   }
 
-  public updateProfile(userId: string | undefined, updates: Partial<UserProfile>): UserProfile {
-    const u = this.ensureUser(userId);
-    const resolvedId = u.account.id;
+  public updateProfile(userId: string, updates: Partial<UserProfile>): UserProfile {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
     u.profile = {
       ...u.profile,
       ...updates,
-      id: resolvedId,
+      id: userId,
       updated_at: new Date().toISOString()
     };
     this.persistAtomic();
@@ -324,20 +298,21 @@ export class MultiUserMemoryStore {
   }
 
   // Skills
-  public getSkills(userId?: string): LearnerSkillState[] {
-    const u = this.ensureUser(userId);
-    return [...u.skills];
+  public getSkills(userId: string): LearnerSkillState[] {
+    const u = this.users.get(userId);
+    return u ? [...u.skills] : [];
   }
 
   public updateSkillState(
-    userId: string | undefined,
+    userId: string,
     skillId: string,
     skillName: string,
     category: string,
     isCorrect: boolean,
     errorTag?: string
   ): LearnerSkillState {
-    const u = this.ensureUser(userId);
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
     let skill = u.skills.find(s => s.skill_id === skillId);
     if (!skill) {
@@ -383,23 +358,15 @@ export class MultiUserMemoryStore {
   }
 
   // Vocabulary
-  public getVocabulary(userId?: string): VocabularyItem[] {
-    const u = this.ensureUser(userId);
-    return [...u.vocabulary];
+  public getVocabulary(userId: string): VocabularyItem[] {
+    const u = this.users.get(userId);
+    return u ? [...u.vocabulary] : [];
   }
 
-  public saveVocabularyItem(arg1: any, arg2?: any): VocabularyItem {
-    let targetUserId: string | undefined;
-    let item: Partial<VocabularyItem> & { word: string };
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      item = arg2;
-    } else {
-      targetUserId = undefined;
-      item = arg1;
-    }
+  public saveVocabularyItem(userId: string, item: Partial<VocabularyItem> & { word: string }): VocabularyItem {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    const u = this.ensureUser(targetUserId);
     const existingIndex = u.vocabulary.findIndex(v => v.word.toLowerCase() === item.word.toLowerCase());
     if (existingIndex >= 0) {
       const existing = u.vocabulary[existingIndex];
@@ -437,49 +404,33 @@ export class MultiUserMemoryStore {
   }
 
   // Attempts
-  public recordAttempt(arg1: any, arg2?: any): Attempt {
-    let targetUserId: string | undefined;
-    let attempt: Attempt;
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      attempt = arg2;
-    } else {
-      targetUserId = undefined;
-      attempt = arg1;
-    }
+  public recordAttempt(userId: string, attempt: Attempt): Attempt {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    const u = this.ensureUser(targetUserId);
     u.attempts.push(attempt);
     const isCorrect = attempt.verdict === 'correct';
     const errorTag = attempt.evaluation.decisive_clue || (attempt.evaluation.error_tags && attempt.evaluation.error_tags[0]);
-    this.updateSkillState(u.account.id, attempt.question_id, attempt.skill_name, attempt.section, isCorrect, errorTag);
+    this.updateSkillState(userId, attempt.question_id, attempt.skill_name, attempt.section, isCorrect, errorTag);
     this.persistAtomic();
     return attempt;
   }
 
-  public getAttempts(userId?: string): Attempt[] {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    return [...u.attempts];
+  public getAttempts(userId: string): Attempt[] {
+    const u = this.users.get(userId);
+    return u ? [...u.attempts] : [];
   }
 
   // Lessons
-  public getLessons(userId?: string): LessonPlan[] {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    return [...u.lessons];
+  public getLessons(userId: string): LessonPlan[] {
+    const u = this.users.get(userId);
+    return u ? [...u.lessons] : [];
   }
 
-  public saveLesson(arg1: any, arg2?: any): LessonPlan {
-    let targetUserId: string | undefined;
-    let lesson: LessonPlan;
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      lesson = arg2;
-    } else {
-      targetUserId = undefined;
-      lesson = arg1;
-    }
+  public saveLesson(userId: string, lesson: LessonPlan): LessonPlan {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    const u = this.ensureUser(targetUserId);
     const idx = u.lessons.findIndex(l => l.lesson_id === lesson.lesson_id);
     if (idx >= 0) {
       u.lessons[idx] = lesson;
@@ -490,33 +441,16 @@ export class MultiUserMemoryStore {
     return lesson;
   }
 
-  public completeLesson(userId: string | undefined, lessonId: string): void {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    const target = u.lessons.find(l => l.lesson_id === lessonId);
-    if (target) {
-      target.status = 'completed';
-      this.persistAtomic();
-    }
-  }
-
   // Summaries
-  public getSummaries(userId?: string): DailySummary[] {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    return [...u.summaries];
+  public getSummaries(userId: string): DailySummary[] {
+    const u = this.users.get(userId);
+    return u ? [...u.summaries] : [];
   }
 
-  public saveSummary(arg1: any, arg2?: any): DailySummary {
-    let targetUserId: string | undefined;
-    let summary: DailySummary;
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      summary = arg2;
-    } else {
-      targetUserId = undefined;
-      summary = arg1;
-    }
+  public saveSummary(userId: string, summary: DailySummary): DailySummary {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    const u = this.ensureUser(targetUserId);
     const idx = u.summaries.findIndex(s => s.lesson_id === summary.lesson_id);
     if (idx >= 0) {
       u.summaries[idx] = summary;
@@ -528,77 +462,51 @@ export class MultiUserMemoryStore {
   }
 
   // Discovery State
-  public getDiscoveryState(userId?: string): DiscoveryState | undefined {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    return u.discoveryState;
+  public getDiscoveryState(userId: string): DiscoveryState | undefined {
+    const u = this.users.get(userId);
+    return u?.discoveryState;
   }
 
-  public saveDiscoveryState(arg1: any, arg2?: any): DiscoveryState {
-    let targetUserId: string | undefined;
-    let state: DiscoveryState;
-
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      state = arg2;
-    } else {
-      targetUserId = undefined;
-      state = arg1;
-    }
-
-    const u = this.ensureUser(targetUserId);
+  public saveDiscoveryState(userId: string, state: DiscoveryState): DiscoveryState {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
     u.discoveryState = state;
     this.persistAtomic();
     return state;
   }
 
   // Diagnostic Session
-  public getDiagnosticSession(userId?: string): DiagnosticSession | undefined {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    return u.diagnosticSession;
+  public getDiagnosticSession(userId: string): DiagnosticSession | undefined {
+    const u = this.users.get(userId);
+    return u?.diagnosticSession;
   }
 
-  public saveDiagnosticSession(arg1: any, arg2?: any): DiagnosticSession {
-    let targetUserId: string | undefined;
-    let session: DiagnosticSession;
-
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      session = arg2;
-    } else {
-      targetUserId = undefined;
-      session = arg1;
-    }
-
-    const u = this.ensureUser(targetUserId);
+  public saveDiagnosticSession(userId: string, session: DiagnosticSession): DiagnosticSession {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
     u.diagnosticSession = session;
     this.persistAtomic();
     return session;
   }
 
-  public clearDiagnosticSession(userId?: string) {
-    const u = this.ensureUser(typeof userId === 'string' ? userId : undefined);
-    delete u.diagnosticSession;
-    this.persistAtomic();
+  public clearDiagnosticSession(userId: string) {
+    const u = this.users.get(userId);
+    if (u) {
+      delete u.diagnosticSession;
+      this.persistAtomic();
+    }
   }
 
   // Diagnostic Reports
-  public getDiagnosticReports(userId?: string): DiagnosticReport[] {
-    const u = this.ensureUser(userId);
-    return [...u.diagnosticReports];
+  public getDiagnosticReports(userId: string): DiagnosticReport[] {
+    const u = this.users.get(userId);
+    return u?.diagnosticReports ? [...u.diagnosticReports] : [];
   }
 
-  public saveDiagnosticReport(arg1: any, arg2?: any): DiagnosticReport {
-    let targetUserId: string | undefined;
-    let report: DiagnosticReport;
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      report = arg2;
-    } else {
-      targetUserId = undefined;
-      report = arg1;
-    }
+  public saveDiagnosticReport(userId: string, report: DiagnosticReport): DiagnosticReport {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    const u = this.ensureUser(targetUserId);
     const idx = u.diagnosticReports.findIndex(r => r.id === report.id);
     if (idx >= 0) {
       u.diagnosticReports[idx] = report;
@@ -610,49 +518,42 @@ export class MultiUserMemoryStore {
   }
 
   // Study Plan
-  public getStudyPlan(userId?: string): PersonalizedStudyPlan | null {
-    const u = this.ensureUser(userId);
-    return u.studyPlan || null;
+  public getStudyPlan(userId: string): PersonalizedStudyPlan | null {
+    const u = this.users.get(userId);
+    return u?.studyPlan || null;
   }
 
-  public saveStudyPlan(arg1: any, arg2?: any): PersonalizedStudyPlan {
-    let targetUserId: string | undefined;
-    let plan: PersonalizedStudyPlan;
-    if (arg2 !== undefined) {
-      targetUserId = typeof arg1 === 'string' ? arg1 : undefined;
-      plan = arg2;
-    } else {
-      targetUserId = undefined;
-      plan = arg1;
-    }
-
-    const u = this.ensureUser(targetUserId);
+  public saveStudyPlan(userId: string, plan: PersonalizedStudyPlan): PersonalizedStudyPlan {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
     u.studyPlan = plan;
     this.persistAtomic();
     return plan;
   }
 
   // Export / Import per user
-  public exportAll(userId?: string): LearningDataExport {
-    const u = this.ensureUser(userId);
+  public exportAll(userId: string): LearningDataExport {
+    const u = this.users.get(userId);
     return {
-      profile: this.getProfile(u.account.id),
-      skills: this.getSkills(u.account.id),
-      vocabulary: this.getVocabulary(u.account.id),
-      attempts: this.getAttempts(u.account.id),
-      lessons: this.getLessons(u.account.id),
-      summaries: this.getSummaries(u.account.id),
-      discoveryState: u.discoveryState,
-      diagnosticReports: u.diagnosticReports || [],
-      studyPlan: u.studyPlan,
+      version: 1,
+      profile: this.getProfile(userId),
+      skills: this.getSkills(userId),
+      vocabulary: this.getVocabulary(userId),
+      attempts: this.getAttempts(userId),
+      lessons: this.getLessons(userId),
+      summaries: this.getSummaries(userId),
+      discoveryState: u?.discoveryState,
+      diagnosticReports: u?.diagnosticReports || [],
+      studyPlan: u?.studyPlan,
       exported_at: new Date().toISOString()
     };
   }
 
-  public importAll(userId: string | undefined, data: Partial<LearningDataExport>) {
-    const u = this.ensureUser(userId);
+  public importAll(userId: string, data: Partial<LearningDataExport>) {
+    const u = this.users.get(userId);
+    if (!u) throw new Error(`User not found: ${userId}`);
 
-    if (data.profile) u.profile = { ...DEFAULT_PROFILE, ...data.profile, id: u.account.id };
+    if (data.profile) u.profile = { ...DEFAULT_PROFILE, ...data.profile, id: userId };
     if (Array.isArray(data.skills)) u.skills = data.skills;
     if (Array.isArray(data.vocabulary)) u.vocabulary = data.vocabulary;
     if (Array.isArray(data.attempts)) u.attempts = data.attempts;
@@ -664,11 +565,11 @@ export class MultiUserMemoryStore {
     this.persistAtomic();
   }
 
-  public clearAll(userId?: string) {
-    const u = this.ensureUser(userId);
-    const resolvedId = u.account.id;
+  public clearAll(userId: string) {
+    const u = this.users.get(userId);
+    if (!u) return;
 
-    u.profile = { ...DEFAULT_PROFILE, id: resolvedId, onboarding_completed: false };
+    u.profile = { ...DEFAULT_PROFILE, id: userId, onboarding_completed: false };
     u.skills = JSON.parse(JSON.stringify(INITIAL_SKILLS));
     u.vocabulary = JSON.parse(JSON.stringify(INITIAL_VOCABULARY));
     u.attempts = [];

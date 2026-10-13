@@ -32,6 +32,8 @@ import {
   clearMemory,
   exportMemory,
   importMemory,
+  validateImportData,
+  getStorageStatus,
   playEnglishSpeech
 } from '../services/api.ts';
 
@@ -98,23 +100,48 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({
     }
   };
 
+  const [importPending, setImportPending] = useState<any>(null);
+  const [importValidation, setImportValidation] = useState<any>(null);
+
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setStatusMessage('');
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
-        await importMemory(parsed);
-        setStatusMessage('Learning history imported successfully!');
-        loadMemoryData();
-        setTimeout(() => setStatusMessage(''), 3000);
+        const validation = validateImportData(parsed);
+        if (!validation.valid) {
+          setStatusMessage(`Validation failed: ${validation.errors.join('; ')}`);
+          setImportPending(null);
+          setImportValidation(null);
+        } else {
+          setImportPending(parsed);
+          setImportValidation(validation);
+        }
       } catch (err) {
         setStatusMessage('Invalid backup JSON file.');
       }
     };
     reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importPending) return;
+    try {
+      await importMemory(importPending);
+      setImportPending(null);
+      setImportValidation(null);
+      setStatusMessage('✓ Learning history imported successfully!');
+      loadMemoryData();
+      onResetComplete();
+      setTimeout(() => setStatusMessage(''), 3500);
+    } catch (err: any) {
+      setStatusMessage(`Import failed: ${err?.message || 'Error'}`);
+    }
   };
 
   const handleClearMemory = async () => {
@@ -466,10 +493,59 @@ export const MemoryDrawer: React.FC<MemoryDrawerProps> = ({
               {activeTab === 'data' && (
                 <div className="space-y-5">
                   <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 space-y-3">
-                    <h4 className="text-sm font-bold text-white">Full Data Portability</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-bold text-white">Full Data Portability (Local-First)</h4>
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {getStorageStatus().type === 'indexeddb' ? 'IndexedDB Active' : 'Memory Store'}
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-300 leading-relaxed">
-                      You own your learning memory. All goals, preferences, diagnostic reports, practiced skills, and vocabulary items are stored structured and can be exported as standard JSON at any time.
+                      You own your learning memory. All goals, preferences, diagnostic reports, practiced skills, and vocabulary items are stored in your browser and can be exported as standard JSON at any time.
                     </p>
+
+                    {/* Import Preview Card */}
+                    {importValidation && importPending && (
+                      <div className="bg-indigo-950/40 border border-indigo-500/50 rounded-2xl p-4 space-y-3 mt-3">
+                        <div className="flex items-center space-x-2 text-indigo-300 text-xs font-bold">
+                          <FileText className="w-4 h-4" />
+                          <span>Import Preview — Validate Before Applying</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-slate-900/80 p-2 rounded-lg border border-indigo-900/50">
+                            <span className="text-slate-400 block text-[10px]">Learner</span>
+                            <strong className="text-white">{importValidation.summary.profileName} ({importValidation.summary.level})</strong>
+                          </div>
+                          <div className="bg-slate-900/80 p-2 rounded-lg border border-indigo-900/50">
+                            <span className="text-slate-400 block text-[10px]">Skills Tracked</span>
+                            <strong className="text-white">{importValidation.summary.skillsCount} skills</strong>
+                          </div>
+                          <div className="bg-slate-900/80 p-2 rounded-lg border border-indigo-900/50">
+                            <span className="text-slate-400 block text-[10px]">Vocabulary</span>
+                            <strong className="text-white">{importValidation.summary.vocabCount} words</strong>
+                          </div>
+                          <div className="bg-slate-900/80 p-2 rounded-lg border border-indigo-900/50">
+                            <span className="text-slate-400 block text-[10px]">Lessons History</span>
+                            <strong className="text-white">{importValidation.summary.lessonsCount} lessons ({importValidation.summary.attemptsCount} attempts)</strong>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end space-x-2 pt-1">
+                          <button
+                            onClick={() => { setImportPending(null); setImportValidation(null); }}
+                            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleConfirmImport}
+                            className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-md shadow-indigo-600/30"
+                          >
+                            Confirm & Apply Import
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex flex-wrap gap-3 pt-2">
                       <button

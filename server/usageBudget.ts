@@ -7,6 +7,17 @@ export interface BudgetConfig {
   maxConcurrentPerUser: number; // max 1 concurrent request per user
 }
 
+export class BudgetExceededError extends Error {
+  public retryAfterSeconds?: number;
+  public reason: string;
+  constructor(reason: string, retryAfterSeconds?: number) {
+    super(reason);
+    this.name = 'BudgetExceededError';
+    this.reason = reason;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
 export class UsageBudgetManager {
   private config: BudgetConfig;
   private userUsage: Map<string, UserAIUsageSummary> = new Map(); // key: `${userId}_${dateKey}`
@@ -192,6 +203,18 @@ export class UsageBudgetManager {
 
   public getRecentLogs(limit = 50): AIUsageLogRecord[] {
     return this.usageLogs.slice(-limit);
+  }
+
+  public updateConfig(newConfig: Partial<BudgetConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+  }
+
+  public reset(): void {
+    this.userUsage.clear();
+    this.globalUsage.clear();
+    this.activeUserRequests.clear();
+    this.userLastRequestTimes.clear();
+    this.usageLogs = [];
   }
 }
 

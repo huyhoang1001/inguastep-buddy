@@ -99,16 +99,62 @@ export const DiagnosticReportModal: React.FC<DiagnosticReportModalProps> = ({
             </p>
           </div>
 
-          <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 text-center shrink-0 w-36">
-            <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1">Accuracy</span>
-            <strong className="text-2xl font-bold text-emerald-400">
-              {Math.round(report.accuracyRate * 100)}%
+          <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 text-center shrink-0 w-44">
+            <span className="text-[10px] font-semibold uppercase text-slate-400 block mb-1">Weighted Performance</span>
+            <strong className="text-3xl font-black text-emerald-400">
+              {typeof report.overallScorePercentage === 'number' ? report.overallScorePercentage : Math.round(report.accuracyRate * 100)}%
             </strong>
-            <span className="block text-[10px] text-slate-500 mt-0.5">
-              {report.totalQuestionsAnswered} answered
+            <span className="block text-[10px] text-slate-400 mt-0.5">
+              4 areas • 25% weight each
             </span>
+            {report.targetDurationMinutes && (
+              <span className="block text-[10px] text-indigo-300 mt-1">
+                ⏱ {report.targetDurationMinutes}-minute standard
+              </span>
+            )}
           </div>
         </div>
+
+        {/* Section Scoring Cards if available */}
+        {report.sectionScores && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span className="font-semibold text-white">Grammar</span>
+                <span className="text-[10px] font-mono text-indigo-300">25% wt</span>
+              </div>
+              <div className="text-xl font-bold text-emerald-400">{report.sectionScores.grammar.percentage}%</div>
+              <div className="text-[10px] text-slate-400">CEFR: <strong className="text-white">{report.sectionScores.grammar.cefr}</strong></div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span className="font-semibold text-white">Vocabulary</span>
+                <span className="text-[10px] font-mono text-indigo-300">25% wt</span>
+              </div>
+              <div className="text-xl font-bold text-sky-400">{report.sectionScores.vocabulary.percentage}%</div>
+              <div className="text-[10px] text-slate-400">CEFR: <strong className="text-white">{report.sectionScores.vocabulary.cefr}</strong></div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span className="font-semibold text-white">Reading</span>
+                <span className="text-[10px] font-mono text-indigo-300">25% wt</span>
+              </div>
+              <div className="text-xl font-bold text-amber-400">{report.sectionScores.reading.percentage}%</div>
+              <div className="text-[10px] text-slate-400">CEFR: <strong className="text-white">{report.sectionScores.reading.cefr}</strong></div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-800/60 border border-slate-700/60 space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <span className="font-semibold text-white">Writing</span>
+                <span className="text-[10px] font-mono text-indigo-300">25% wt</span>
+              </div>
+              <div className="text-xl font-bold text-purple-400">{report.sectionScores.writing.percentage}%</div>
+              <div className="text-[10px] text-slate-400">CEFR: <strong className="text-white">{report.sectionScores.writing.cefr}</strong></div>
+            </div>
+          </div>
+        )}
 
         {/* Skill-by-Skill Breakdown */}
         <div className="space-y-3">

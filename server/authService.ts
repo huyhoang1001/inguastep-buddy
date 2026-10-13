@@ -2,19 +2,22 @@ import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { UserAccount } from './authTypes.js';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
-const client = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : new OAuth2Client();
+function getClient(): OAuth2Client {
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
+  return clientId ? new OAuth2Client(clientId) : new OAuth2Client();
+}
 
 // In-memory token to UserAccount map
 const sessionTokens = new Map<string, { user: UserAccount; expiresAt: number }>();
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export function isGoogleAuthAvailable(): boolean {
-  return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== 'MY_GOOGLE_CLIENT_ID');
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
+  return Boolean(clientId && clientId !== 'MY_GOOGLE_CLIENT_ID');
 }
 
 export function getGoogleClientId(): string {
-  return isGoogleAuthAvailable() ? GOOGLE_CLIENT_ID : '';
+  return isGoogleAuthAvailable() ? (process.env.GOOGLE_CLIENT_ID || '') : '';
 }
 
 /**
@@ -22,15 +25,29 @@ export function getGoogleClientId(): string {
  * Cryptographically checks Google signature, audience, and expiration.
  */
 export async function verifyGoogleIdToken(idToken: string): Promise<UserAccount> {
-  if (!GOOGLE_CLIENT_ID) {
-    // If not configured, fall back to safe decode for development/demo only if allowed,
-    // otherwise require Google Client ID.
+  const clientId = process.env.GOOGLE_CLIENT_ID || '';
+
+  // Allow controlled mock tokens in test environment
+  if (process.env.NODE_ENV === 'test' && idToken.startsWith('test_mock_google_')) {
+    const sub = idToken.replace('test_mock_google_', '');
+    return {
+      id: `google_${sub}`,
+      email: `${sub}@gmail.com`,
+      name: `Google Learner ${sub}`,
+      authProvider: 'google',
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString()
+    };
+  }
+
+  if (!clientId || clientId === 'MY_GOOGLE_CLIENT_ID') {
     throw new Error('Google Client ID is not configured on the server. Set GOOGLE_CLIENT_ID in your environment.');
   }
 
+  const client = getClient();
   const ticket = await client.verifyIdToken({
     idToken,
-    audience: GOOGLE_CLIENT_ID
+    audience: clientId
   });
 
   const payload = ticket.getPayload();
@@ -91,12 +108,12 @@ export function revokeSessionToken(token: string): void {
 /**
  * Creates a guest session for public evaluation if desired, clearly isolated by guest ID.
  */
-export function createGuestSession(): { user: UserAccount; token: string } {
-  const guestId = `guest_${crypto.randomBytes(8).toString('hex')}`;
+export function createGuestSession(preferredId?: string): { user: UserAccount; token: string } {
+  const guestId = preferredId || 'learner-primary';
   const user: UserAccount = {
     id: guestId,
-    email: 'guest@linguastep.local',
-    name: 'Guest Learner',
+    email: `${guestId}@linguastep.local`,
+    name: guestId === 'learner-primary' ? 'Primary Learner' : 'Guest Learner',
     authProvider: 'guest',
     createdAt: new Date().toISOString(),
     lastLoginAt: new Date().toISOString()
@@ -104,3 +121,8 @@ export function createGuestSession(): { user: UserAccount; token: string } {
   const token = createSessionToken(user);
   return { user, token };
 }
+
+export function clearSessionsForTest(): void {
+  sessionTokens.clear();
+}
+

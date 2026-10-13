@@ -6,6 +6,7 @@ import {
   Question,
   AnswerEvaluation
 } from './types/learning.ts';
+import { UserAccount, BudgetLimits } from './types/auth.ts';
 import { Header } from './components/Header.tsx';
 import { OnboardingModal } from './components/OnboardingModal.tsx';
 import { LessonView } from './components/LessonView.tsx';
@@ -13,15 +14,26 @@ import { LessonSummaryModal } from './components/LessonSummaryModal.tsx';
 import { MemoryDrawer } from './components/MemoryDrawer.tsx';
 import { SettingsModal } from './components/SettingsModal.tsx';
 import { MilestonesModal } from './components/MilestonesModal.tsx';
+import { AuthModal } from './components/AuthModal.tsx';
 import {
+  getAuthSession,
+  loginAsGuest,
+  logout,
   getProfile,
   generateLessonPlan,
   generateLessonSummary,
   getMemory
 } from './services/api.ts';
+import { localStore } from './services/localStore.ts';
 import { calculateMilestones } from './services/milestoneService.ts';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
+  const [budgetLimits, setBudgetLimits] = useState<BudgetLimits | null>(null);
+  const [googleClientIdConfigured, setGoogleClientIdConfigured] = useState<boolean>(false);
+  const [googleClientId, setGoogleClientId] = useState<string>('');
+  const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activePlan, setActivePlan] = useState<LessonPlan | null>(null);
   const [activeSummary, setActiveSummary] = useState<DailySummary | null>(null);
@@ -46,10 +58,27 @@ export default function App() {
   const initApp = async () => {
     setIsLoading(true);
     try {
+      // 1. Check or establish session
+      let session = await getAuthSession();
+      setGoogleClientIdConfigured(session.googleClientIdConfigured);
+      setGoogleClientId(session.googleClientId || '');
+
+      let user = session.user;
+      if (!user) {
+        // Automatically create or resume guest learner session (retains existing data)
+        const guestResult = await loginAsGuest();
+        user = guestResult.user;
+        setBudgetLimits(guestResult.limits);
+      } else {
+        setBudgetLimits(session.limits);
+      }
+      setCurrentUser(user);
+
+      // 2. Fetch authenticated user profile
       const userProfile = await getProfile();
       setProfile(userProfile);
 
-      // Check recurring errors count and milestones
+      // 3. Fetch user memory, mistakes count, and milestone badges
       const mem = await getMemory();
       const totalErrors = mem.skills?.flatMap(s => s.recurring_errors)?.length || 0;
       setMistakesCount(totalErrors);
@@ -58,15 +87,26 @@ export default function App() {
       setMilestonesData(computedMilestones);
 
       if (!userProfile.onboarding_completed) {
-        setOnboardingPhase('discovery');
+        const disc = await localStore.getDiscoveryState();
+        const diag = await localStore.getDiagnosticSession();
+        if (diag && (diag.status === 'in_progress' || diag.status === 'paused')) {
+          setOnboardingPhase('diagnostic');
+        } else if (disc && disc.isConfirmed) {
+          setOnboardingPhase('diagnostic');
+        } else {
+          setOnboardingPhase('discovery');
+        }
         setShowOnboarding(true);
       } else {
-        // Load or create active lesson plan
-        if (mem.lessons && mem.lessons.length > 0) {
-          const latest = mem.lessons[mem.lessons.length - 1];
-          setActivePlan(latest);
+        // Restore active in-progress lesson or load latest without wasteful regeneration
+        const active = await localStore.getActiveLesson();
+        if (active && active.plan && (active.status === 'in_progress' || active.status === 'paused')) {
+          setActivePlan(active.plan);
+        } else if (mem.lessons && mem.lessons.length > 0) {
+          const inProgress = mem.lessons.find(l => l.status === 'in_progress');
+          setActivePlan(inProgress || mem.lessons[mem.lessons.length - 1]);
         } else {
-          const newPlan = await generateLessonPlan();
+          const newPlan = await generateLessonPlan(userProfile.daily_minutes);
           setActivePlan(newPlan);
         }
 
@@ -79,6 +119,21 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAuthSuccess = async (user: UserAccount, limits: BudgetLimits) => {
+    setCurrentUser(user);
+    setBudgetLimits(limits);
+    setShowAuthModal(false);
+    await initApp();
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setCurrentUser(null);
+    setProfile(null);
+    setActivePlan(null);
+    await initApp();
   };
 
   const refreshMilestones = async () => {
@@ -133,7 +188,8 @@ export default function App() {
     setIsLoading(true);
     try {
       const targetMins = overrideMinutes || profile?.daily_minutes;
-      const newPlan = await generateLessonPlan(targetMins);
+      // Pass forceRegenerate = true when explicitly clicking "Start New Lesson"
+      const newPlan = await generateLessonPlan(targetMins, true);
       setActivePlan(newPlan);
       await refreshMilestones();
     } catch (err) {
@@ -148,7 +204,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-100">
         <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
         <h2 className="text-base font-medium">Loading LinguaStep Tutor...</h2>
-        <p className="text-xs text-slate-400 mt-1">Checking persistent learning memory</p>
+        <p className="text-xs text-slate-400 mt-1">Checking secure session and persistent learning memory</p>
       </div>
     );
   }
@@ -157,7 +213,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* App Header with Milestone Progress Badge */}
+      {/* App Header with Milestone Progress Badge, Budget & Auth */}
       <Header
         profile={profile}
         mistakesCount={mistakesCount}
@@ -165,6 +221,10 @@ export default function App() {
         nextBadge={milestonesData?.nextBadge || null}
         unlockedCount={milestonesData?.unlockedBadges.length || 0}
         totalBadgesCount={milestonesData?.allBadges.length || 10}
+        currentUser={currentUser}
+        budgetLimits={budgetLimits}
+        onOpenAuth={() => setShowAuthModal(true)}
+        onLogout={handleLogout}
         onOpenMilestones={() => setShowMilestonesModal(true)}
         onOpenMemory={() => setShowMemoryDrawer(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
@@ -200,6 +260,17 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Auth Modal (Google & Guest Sign In) */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        currentUser={currentUser}
+        googleClientIdConfigured={googleClientIdConfigured}
+        googleClientId={googleClientId}
+        limits={budgetLimits}
+        onAuthSuccess={handleAuthSuccess}
+      />
 
       {/* Milestones Showcase Modal */}
       {milestonesData && (
@@ -250,7 +321,7 @@ export default function App() {
           if (durationChanged) {
             setIsLoading(true);
             try {
-              const newPlan = await generateLessonPlan();
+              const newPlan = await generateLessonPlan(updated.daily_minutes, true);
               setActivePlan(newPlan);
             } catch (err) {
               console.error('Failed to regenerate lesson plan for new duration:', err);
@@ -263,6 +334,8 @@ export default function App() {
           setOnboardingPhase('discovery');
           setShowOnboarding(true);
         }}
+        onDataReset={initApp}
+        onDataImported={initApp}
       />
     </div>
   );

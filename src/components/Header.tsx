@@ -10,10 +10,15 @@ import {
   Award,
   Medal,
   Crown,
-  ChevronRight
+  ChevronRight,
+  Zap,
+  LogIn,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 import { UserProfile } from '../types/learning.ts';
 import { MilestoneBadge } from '../types/milestone.ts';
+import { UserAccount, BudgetLimits } from '../types/auth.ts';
 
 interface HeaderProps {
   profile: UserProfile;
@@ -22,6 +27,10 @@ interface HeaderProps {
   nextBadge: MilestoneBadge | null;
   unlockedCount: number;
   totalBadgesCount: number;
+  currentUser?: UserAccount | null;
+  budgetLimits?: BudgetLimits | null;
+  onOpenAuth?: () => void;
+  onLogout?: () => void;
   onOpenMilestones: () => void;
   onOpenMemory: () => void;
   onOpenSettings: () => void;
@@ -37,6 +46,10 @@ export const Header: React.FC<HeaderProps> = ({
   nextBadge,
   unlockedCount,
   totalBadgesCount,
+  currentUser,
+  budgetLimits,
+  onOpenAuth,
+  onLogout,
   onOpenMilestones,
   onOpenMemory,
   onOpenSettings,
@@ -173,6 +186,19 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
+          {/* AI Usage Budget pill */}
+          {budgetLimits && (
+            <div
+              title={`Daily server-side AI budget: ${budgetLimits.userRemaining} of ${budgetLimits.userDailyLimit} requests remaining today`}
+              className="hidden lg:flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/90 border border-slate-700 text-slate-300"
+            >
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-[11px] font-mono">
+                {budgetLimits.userRemaining}/{budgetLimits.userDailyLimit} AI
+              </span>
+            </div>
+          )}
+
           {/* Settings & Profile */}
           <button
             onClick={onOpenSettings}
@@ -181,6 +207,50 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Sliders className="w-4 h-4" />
           </button>
+
+          {/* User Account / Sign In */}
+          {currentUser ? (
+            <div className="flex items-center space-x-1.5 pl-1 border-l border-slate-800">
+              <button
+                onClick={onOpenAuth}
+                title={`Signed in as ${currentUser.name} (${currentUser.authProvider})`}
+                className="flex items-center space-x-1.5 p-1 rounded-lg hover:bg-slate-800 transition group"
+              >
+                {currentUser.picture ? (
+                  <img
+                    src={currentUser.picture}
+                    alt={currentUser.name}
+                    className="w-7 h-7 rounded-full border border-indigo-400/60"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-xs font-bold text-indigo-300">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-medium text-slate-200 hidden md:inline max-w-[90px] truncate group-hover:text-white">
+                  {currentUser.name.split(' ')[0]}
+                </span>
+              </button>
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  title="Sign out"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              title="Sign in with Google or continue as guest"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/30 transition"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign in</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

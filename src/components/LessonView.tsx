@@ -28,11 +28,15 @@ import {
   TutorAssistantResponse
 } from '../types/learning.ts';
 import { VocabularyCard } from './VocabularyCard.tsx';
+import { TutorDeepDiveChat } from './TutorDeepDiveChat.tsx';
 import {
   generateQuestion,
   evaluateAnswer,
   requestTutorAssist,
-  playEnglishSpeech
+  playEnglishSpeech,
+  getActiveLessonState,
+  saveActiveLessonState,
+  clearActiveLessonState
 } from '../services/api.ts';
 
 interface LessonViewProps {
@@ -108,10 +112,41 @@ export const LessonView: React.FC<LessonViewProps> = ({
     }
   }, []);
 
-  // Fetch question whenever section or question index changes
+  // Restore saved active lesson state or load initial question
   useEffect(() => {
-    loadQuestionForSection(currentSectionIndex, questionIndexInSection);
-  }, [currentSectionIndex, questionIndexInSection]);
+    let isMounted = true;
+    async function initOrResume() {
+      try {
+        const saved = await getActiveLessonState();
+        if (isMounted && saved && saved.lessonId === plan.lesson_id) {
+          setCurrentSectionIndex(saved.currentSectionIndex || 0);
+          setQuestionIndexInSection(saved.questionIndexInSection || 0);
+          setSectionProgress(saved.sectionProgress || {});
+          setLessonAttempts(saved.attempts || []);
+          setSecondsElapsed(saved.secondsElapsed || 0);
+
+          if (saved.currentQuestion) {
+            setCurrentQuestion(saved.currentQuestion);
+            setIsLoadingQuestion(false);
+          } else {
+            loadQuestionForSection(saved.currentSectionIndex || 0, saved.questionIndexInSection || 0);
+          }
+
+          if (saved.lastEvaluation) {
+            setEvaluation(saved.lastEvaluation);
+            setUserAnswer(saved.lastUserAnswer || '');
+          }
+        } else {
+          loadQuestionForSection(0, 0);
+        }
+      } catch (err) {
+        console.warn('Failed to restore active lesson state:', err);
+        loadQuestionForSection(0, 0);
+      }
+    }
+    initOrResume();
+    return () => { isMounted = false; };
+  }, [plan.lesson_id]);
 
   const loadQuestionForSection = async (sectionIdx: number, qIdx: number) => {
     setIsLoadingQuestion(true);
@@ -131,6 +166,22 @@ export const LessonView: React.FC<LessonViewProps> = ({
         secPlan.target_questions_count || 1
       );
       setCurrentQuestion(q);
+
+      // Persist active question position
+      await saveActiveLessonState({
+        lessonId: plan.lesson_id,
+        plan,
+        currentSectionIndex: sectionIdx,
+        questionIndexInSection: qIdx,
+        currentQuestion: q,
+        lastEvaluation: null,
+        lastUserAnswer: '',
+        attempts: lessonAttempts,
+        sectionProgress,
+        status: 'in_progress',
+        secondsElapsed,
+        updatedAt: new Date().toISOString()
+      });
     } catch (err) {
       console.error('Failed to load question:', err);
     } finally {
@@ -147,23 +198,41 @@ export const LessonView: React.FC<LessonViewProps> = ({
       setEvaluation(result);
 
       // Record to lesson attempts
-      setLessonAttempts(prev => [
-        ...prev,
+      const updatedAttempts = [
+        ...lessonAttempts,
         {
           question: currentQuestion,
           evaluation: result,
           userAnswer
         }
-      ]);
+      ];
+      setLessonAttempts(updatedAttempts);
 
       // Record section progress count
-      setSectionProgress(prev => ({
-        ...prev,
+      const updatedProgress = {
+        ...sectionProgress,
         [currentSectionIndex]: Math.min(
           targetQuestionsInSection,
-          (prev[currentSectionIndex] || 0) + 1
+          (sectionProgress[currentSectionIndex] || 0) + 1
         )
-      }));
+      };
+      setSectionProgress(updatedProgress);
+
+      // Persist active in-progress state to local storage immediately
+      await saveActiveLessonState({
+        lessonId: plan.lesson_id,
+        plan,
+        currentSectionIndex,
+        questionIndexInSection,
+        currentQuestion,
+        lastEvaluation: result,
+        lastUserAnswer: userAnswer,
+        attempts: updatedAttempts,
+        sectionProgress: updatedProgress,
+        status: 'in_progress',
+        secondsElapsed,
+        updatedAt: new Date().toISOString()
+      });
     } catch (err) {
       console.error('Failed to evaluate answer:', err);
     } finally {
@@ -188,26 +257,32 @@ export const LessonView: React.FC<LessonViewProps> = ({
     }
   };
 
-  const handleNextQuestionOrSection = () => {
+  const handleNextQuestionOrSection = async () => {
     const activeSections = isShortSession ? plan.sections.slice(0, 2) : plan.sections;
     const isLastQ = questionIndexInSection >= targetQuestionsInSection - 1;
     const isLastSec = currentSectionIndex >= activeSections.length - 1;
 
     if (!isLastQ) {
       // Advance to next question within the same activity/section
-      setQuestionIndexInSection(prev => prev + 1);
+      const nextQIdx = questionIndexInSection + 1;
+      setQuestionIndexInSection(nextQIdx);
+      loadQuestionForSection(currentSectionIndex, nextQIdx);
     } else if (!isLastSec) {
       // Advance to next section/activity
-      setCurrentSectionIndex(prev => prev + 1);
+      const nextSecIdx = currentSectionIndex + 1;
+      setCurrentSectionIndex(nextSecIdx);
       setQuestionIndexInSection(0);
+      loadQuestionForSection(nextSecIdx, 0);
     } else {
-      // Done with all planned sections
+      // Done with all planned sections - clear active lesson and finalize
+      await clearActiveLessonState();
       const timeSpent = Math.max(1, Math.round(secondsElapsed / 60));
       onFinishLesson(lessonAttempts, timeSpent);
     }
   };
 
-  const handleFinishEarly = () => {
+  const handleFinishEarly = async () => {
+    await clearActiveLessonState();
     const timeSpent = Math.max(1, Math.round(secondsElapsed / 60));
     onFinishLesson(lessonAttempts, timeSpent);
   };
@@ -783,6 +858,35 @@ export const LessonView: React.FC<LessonViewProps> = ({
                 </div>
               )}
 
+              {/* Dynamic Useful Phrases for your Passage / Exercise */}
+              {evaluation.useful_phrases && evaluation.useful_phrases.length > 0 && (
+                <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-2xl p-4 space-y-2.5">
+                  <span className="text-xs uppercase font-bold tracking-wider text-emerald-300 flex items-center space-x-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Useful Collocations & Phrases for this Context</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {evaluation.useful_phrases.map((up, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
+                        <div className="text-xs font-bold text-white flex items-center justify-between">
+                          <span className="text-emerald-300 font-mono">{typeof up === 'string' ? up : up.phrase}</span>
+                        </div>
+                        {typeof up !== 'string' && up.meaning && (
+                          <p className="text-[11px] text-slate-300">
+                            <span className="text-slate-400">Meaning: </span>{up.meaning}
+                          </p>
+                        )}
+                        {typeof up !== 'string' && up.how_to_use && (
+                          <p className="text-[10px] text-slate-400 italic">
+                            Tip: {up.how_to_use}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Contrast / tempting wrong answers */}
               {evaluation.contrast_explanation && (
                 <div className="text-xs text-slate-400 bg-slate-900/50 p-3 rounded-xl border border-slate-800">
@@ -790,6 +894,13 @@ export const LessonView: React.FC<LessonViewProps> = ({
                   {evaluation.contrast_explanation}
                 </div>
               )}
+
+              {/* Interactive Tutor Deep-Dive Chat: Ask more & explore nuances before moving on */}
+              <TutorDeepDiveChat
+                question={currentQuestion}
+                userAnswer={userAnswer}
+                evaluation={evaluation}
+              />
 
               {/* Action buttons: Next question / Retry */}
               <div className="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">

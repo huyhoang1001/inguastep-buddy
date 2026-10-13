@@ -44,6 +44,35 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
     }
   },
   {
+    id: 'diag-gram-a2-pres-cont-1',
+    category: 'grammar',
+    skillId: 'present_simple_vs_continuous',
+    skillName: 'Present Simple vs. Continuous',
+    difficulty: 'A2',
+    topic: 'general',
+    question: {
+      id: 'dg-a2-2',
+      section: 'grammar',
+      skill_id: 'present_simple_vs_continuous',
+      skill_name: 'Present Simple vs. Continuous',
+      question_type: 'multiple_choice',
+      difficulty: 'A2',
+      context_topic: 'general',
+      prompt: 'Right now, the engineering team ____ a new update to fix the payment gateway.',
+      options: [
+        { id: 'A', text: 'deploys' },
+        { id: 'B', text: 'is deploying' },
+        { id: 'C', text: 'deployed' },
+        { id: 'D', text: 'was deploying' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'is deploying',
+      accepted_alternatives: ['is deploying'],
+      hint: 'Chú ý cụm "Right now" (ngay lúc này) chỉ hành động đang diễn ra tại thời điểm nói.',
+      explanation_rule: 'Dùng thì Present Continuous (is/are + V-ing) cho sự việc đang diễn ra ngay tại thời điểm nói.'
+    }
+  },
+  {
     id: 'diag-gram-b1-pres-perf-1',
     category: 'grammar',
     skillId: 'present_perfect_vs_past_simple',
@@ -99,6 +128,35 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       accepted_alternatives: ['had'],
       hint: 'Vế kết quả là "would take" (giả định ở hiện tại). Vế If dùng thì gì?',
       explanation_rule: 'Câu điều kiện loại 2: If + S + Past Simple (had), S + would + V. Dùng để giả định một tình huống không có thật ở hiện tại.'
+    }
+  },
+  {
+    id: 'diag-gram-b1-modals-1',
+    category: 'grammar',
+    skillId: 'modal_verbs_obligation',
+    skillName: 'Modal Verbs of Obligation & Necessity',
+    difficulty: 'B1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-b1-mod',
+      section: 'grammar',
+      skill_id: 'modal_verbs_obligation',
+      skill_name: 'Modal Verbs of Obligation',
+      question_type: 'multiple_choice',
+      difficulty: 'B1',
+      context_topic: 'workplace_tech',
+      prompt: 'Developers ____ commit directly to the production branch without a peer code review.',
+      options: [
+        { id: 'A', text: 'must not' },
+        { id: 'B', text: 'do not need to' },
+        { id: 'C', text: 'should' },
+        { id: 'D', text: 'might' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'must not',
+      accepted_alternatives: ['must not'],
+      hint: 'Đây là quy tắc cấm đoán nghiêm ngặt trong kỹ thuật (không được phép làm).',
+      explanation_rule: '"Must not" diễn tả sự cấm chỉ mang tính quy định, trong khi "don\'t need to" chỉ sự không cần thiết.'
     }
   },
   {
@@ -171,14 +229,50 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       section: 'grammar',
       skill_id: 'passive_voice_technical',
       skill_name: 'Passive Voice in Technical Contexts',
-      question_type: 'fill_in_blank',
+      question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
-      prompt: 'Complete the sentence with the correct passive form of "resolve":\nDuring yesterday\'s maintenance window, the network outage ________________ (resolve) by the DevOps team within 20 minutes.',
+      prompt: 'During yesterday\'s maintenance window, the network outage ____ by the infrastructure team within 20 minutes.',
+      options: [
+        { id: 'A', text: 'was resolved' },
+        { id: 'B', text: 'resolved' },
+        { id: 'C', text: 'has been resolved' },
+        { id: 'D', text: 'is resolved' }
+      ],
+      expected_answer_ids: ['A'],
       expected_answer_text: 'was resolved',
-      accepted_alternatives: ['was resolved', 'had been resolved'],
+      accepted_alternatives: ['was resolved'],
       hint: 'Chủ ngữ "the network outage" là số ít, và sự kiện "yesterday\'s maintenance window" xảy ra trong quá khứ.',
       explanation_rule: 'Dùng thì Past Simple thể bị động cho chủ ngữ số ít: "was + resolved".'
+    }
+  },
+  {
+    id: 'diag-gram-b2-cleft-1',
+    category: 'grammar',
+    skillId: 'cleft_sentences_focus',
+    skillName: 'Cleft Sentences for Emphasis',
+    difficulty: 'B2',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-b2-cleft',
+      section: 'grammar',
+      skill_id: 'cleft_sentences_focus',
+      skill_name: 'Cleft Sentences for Emphasis',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      prompt: 'It was the unhandled null exception, not the database timeout, that ____ the server crash.',
+      options: [
+        { id: 'A', text: 'triggered' },
+        { id: 'B', text: 'triggering' },
+        { id: 'C', text: 'triggers' },
+        { id: 'D', text: 'to trigger' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'triggered',
+      accepted_alternatives: ['triggered'],
+      hint: 'Cấu trúc câu chẻ nhấn mạnh: "It was + đối tượng + that + V-past".',
+      explanation_rule: 'Cleft sentence: It is/was + X + that/who + V. Động từ chia theo thời điểm quá khứ tương thích với "was".'
     }
   },
   {
@@ -210,10 +304,68 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       explanation_rule: 'Cấu trúc đảo ngữ: Rarely + Auxiliary (have) + Subject (we) + Main Verb (witnessed).'
     }
   },
+  {
+    id: 'diag-gram-c1-participle-1',
+    category: 'grammar',
+    skillId: 'participle_clauses_advanced',
+    skillName: 'Participle Clauses & Sentence Reduction',
+    difficulty: 'C1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-c1-part',
+      section: 'grammar',
+      skill_id: 'participle_clauses_advanced',
+      skill_name: 'Participle Clauses',
+      question_type: 'multiple_choice',
+      difficulty: 'C1',
+      context_topic: 'workplace_tech',
+      prompt: '____ the legacy monolithic architecture for three years, the lead architect easily identified the bottlenecks.',
+      options: [
+        { id: 'A', text: 'Having maintained' },
+        { id: 'B', text: 'Maintained' },
+        { id: 'C', text: 'To maintain' },
+        { id: 'D', text: 'Having been maintain' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'Having maintained',
+      accepted_alternatives: ['Having maintained'],
+      hint: 'Hành động duy trì kiến trúc đã diễn ra trong suốt 3 năm trước khi xác định được các nút thắt cổ chai.',
+      explanation_rule: 'Dùng hoàn thành phân từ "Having + V3" để rút gọn mệnh đề trạng ngữ chỉ hành động xảy ra trước hành động chính.'
+    }
+  },
 
   // ==========================================
-  // VOCABULARY: B1 / B2 / C1
+  // VOCABULARY: A2 / B1 / B2 / C1
   // ==========================================
+  {
+    id: 'diag-voc-a2-work-1',
+    category: 'vocabulary',
+    skillId: 'daily_work_action_verbs',
+    skillName: 'Daily Workplace Verbs',
+    difficulty: 'A2',
+    topic: 'general',
+    question: {
+      id: 'dg-voc-a2',
+      section: 'vocabulary',
+      skill_id: 'daily_work_action_verbs',
+      skill_name: 'Daily Workplace Verbs',
+      question_type: 'multiple_choice',
+      difficulty: 'A2',
+      context_topic: 'general',
+      prompt: 'Please remember to ____ the documents to your manager before the end of the day.',
+      options: [
+        { id: 'A', text: 'send' },
+        { id: 'B', text: 'listen' },
+        { id: 'C', text: 'drink' },
+        { id: 'D', text: 'sleep' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'send',
+      accepted_alternatives: ['send'],
+      hint: 'Động từ nào chỉ việc chuyển giao hoặc gửi tài liệu cho người khác?',
+      explanation_rule: '"Send documents to someone" là cụm từ chỉ việc gửi tài liệu.'
+    }
+  },
   {
     id: 'diag-voc-b1-colloc-1',
     category: 'vocabulary',
@@ -241,6 +393,35 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       accepted_alternatives: ['schedule'],
       hint: 'Từ nào mang nghĩa lên lịch/sắp xếp một cuộc họp?',
       explanation_rule: 'Collocation thông dụng trong công việc là "schedule a meeting" (lên lịch họp).'
+    }
+  },
+  {
+    id: 'diag-voc-b1-phrasal-1',
+    category: 'vocabulary',
+    skillId: 'phrasal_verbs_workplace',
+    skillName: 'Phrasal Verbs in Collaboration',
+    difficulty: 'B1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-voc-b1-pv',
+      section: 'vocabulary',
+      skill_id: 'phrasal_verbs_workplace',
+      skill_name: 'Phrasal Verbs in Collaboration',
+      question_type: 'multiple_choice',
+      difficulty: 'B1',
+      context_topic: 'workplace_tech',
+      prompt: 'We need to ____ with the design team before finalizing the user interface layout.',
+      options: [
+        { id: 'A', text: 'follow up' },
+        { id: 'B', text: 'give in' },
+        { id: 'C', text: 'turn down' },
+        { id: 'D', text: 'fall apart' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'follow up',
+      accepted_alternatives: ['follow up'],
+      hint: 'Cụm động từ chỉ việc trao đổi tiếp hoặc theo dõi tiến độ công việc với ai đó.',
+      explanation_rule: '"Follow up with someone" là cụm động từ chỉ hành động liên hệ tiếp tục để cập nhật thông tin.'
     }
   },
   {
@@ -302,6 +483,35 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
     }
   },
   {
+    id: 'diag-voc-b2-streamline-1',
+    category: 'vocabulary',
+    skillId: 'collocation_streamline',
+    skillName: 'Process Optimization Vocabulary',
+    difficulty: 'B2',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-voc-b2-stream',
+      section: 'vocabulary',
+      skill_id: 'collocation_streamline',
+      skill_name: 'Process Optimization Vocabulary',
+      question_type: 'multiple_choice',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      prompt: 'By automating repetitive CI/CD deployments, the platform team managed to ____ the release cycle.',
+      options: [
+        { id: 'A', text: 'streamline' },
+        { id: 'B', text: 'complicate' },
+        { id: 'C', text: 'stagnate' },
+        { id: 'D', text: 'postpone' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'streamline',
+      accepted_alternatives: ['streamline'],
+      hint: 'Động từ chỉ việc tinh giản, tối ưu hóa quy trình để đạt hiệu quả cao hơn.',
+      explanation_rule: '"Streamline the process/cycle" nghĩa là tinh gọn quy trình bằng cách loại bỏ thao tác dư thừa.'
+    }
+  },
+  {
     id: 'diag-voc-c1-viable-1',
     category: 'vocabulary',
     skillId: 'nuanced_adjectives_c1',
@@ -330,30 +540,60 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       explanation_rule: '"economically viable" là collocation cao cấp chỉ tính khả thi về mặt tài chính.'
     }
   },
+  {
+    id: 'diag-voc-c1-discrepancy-1',
+    category: 'vocabulary',
+    skillId: 'advanced_analytical_nouns',
+    skillName: 'Analytical & Diagnostic Nouns',
+    difficulty: 'C1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-voc-c1-disc',
+      section: 'vocabulary',
+      skill_id: 'advanced_analytical_nouns',
+      skill_name: 'Analytical & Diagnostic Nouns',
+      question_type: 'multiple_choice',
+      difficulty: 'C1',
+      context_topic: 'workplace_tech',
+      prompt: 'The audit revealed a substantial ____ between the reported server costs and the actual cloud billing telemetry.',
+      options: [
+        { id: 'A', text: 'discrepancy' },
+        { id: 'B', text: 'conformity' },
+        { id: 'C', text: 'unanimity' },
+        { id: 'D', text: 'synergy' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'discrepancy',
+      accepted_alternatives: ['discrepancy'],
+      hint: 'Danh từ chỉ sự sai lệch, khác biệt bất thường giữa hai nguồn số liệu đáng lẽ phải khớp nhau.',
+      explanation_rule: '"Discrepancy" chỉ sự bất nhất, không khớp giữa các số liệu báo cáo và thực tế.'
+    }
+  },
 
   // ==========================================
-  // READING COMPREHENSION: B1 / B2 / C1
+  // READING PASSAGES & QUESTIONS
   // ==========================================
+  // PASSAGE 1: Quick / B1 (Managing Screen Fatigue)
   {
     id: 'diag-read-b1-remote-1',
     category: 'reading',
     skillId: 'reading_main_idea',
-    skillName: 'Reading Comprehension (Main Idea & Detail)',
+    skillName: 'Reading Comprehension (Main Idea)',
     difficulty: 'B1',
     topic: 'general',
     question: {
-      id: 'dg-read-b1',
+      id: 'dg-read-b1-q1',
       section: 'reading',
       skill_id: 'reading_main_idea',
-      skill_name: 'Reading Comprehension',
+      skill_name: 'Reading Comprehension (Main Idea)',
       question_type: 'reading_comprehension',
       difficulty: 'B1',
       context_topic: 'general',
       reading_passage: {
         title: 'Managing Screen Fatigue',
-        word_count: 98,
+        word_count: 104,
         topic: 'Health & Remote Work',
-        text: 'Working from home offers flexibility, but prolonged screen exposure frequently causes eye strain and cognitive fatigue. Health specialists recommend following the 20-20-20 guideline: every twenty minutes, look away from your monitor at an object twenty feet away for at least twenty seconds. Additionally, scheduling short physical breaks between tasks helps maintain concentration throughout the afternoon. Standing up, stretching, or drinking water resets your focus far more effectively than scrolling on your phone during break time.'
+        text: 'Working from home offers immense flexibility, but prolonged screen exposure frequently causes eye strain and cognitive fatigue. Health specialists recommend following the 20-20-20 guideline: every twenty minutes, look away from your monitor at an object twenty feet away for at least twenty seconds. Additionally, scheduling short physical breaks between tasks helps maintain concentration throughout the afternoon. Standing up, stretching, or drinking water resets your focus far more effectively than scrolling on your phone during break time.'
       },
       prompt: 'What is the primary advice given in the passage to combat cognitive fatigue?',
       options: [
@@ -369,15 +609,17 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       explanation_rule: 'Đoạn văn khuyên áp dụng quy tắc 20-20-20 và vận động nhẹ thay vì tiếp tục nhìn vào màn hình điện thoại.'
     }
   },
+
+  // PASSAGE 2: Standard / B2 (The Discipline of Technical Refactoring) - 3 LINKED QUESTIONS
   {
     id: 'diag-read-b2-techdebt-1',
     category: 'reading',
     skillId: 'reading_inference_tech',
-    skillName: 'Reading Inference & Author Intent (B2)',
+    skillName: 'Reading Inference & Author Intent',
     difficulty: 'B2',
     topic: 'workplace_tech',
     question: {
-      id: 'dg-read-b2',
+      id: 'dg-read-b2-q1',
       section: 'reading',
       skill_id: 'reading_inference_tech',
       skill_name: 'Reading Inference & Author Intent',
@@ -386,7 +628,7 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       context_topic: 'workplace_tech',
       reading_passage: {
         title: 'The Discipline of Technical Refactoring',
-        word_count: 132,
+        word_count: 145,
         topic: 'Engineering Management',
         text: 'When software startups transition into scaling companies, shortcuts taken during early product validation inevitably transform into systemic friction. Rushing features without modular architectural boundaries creates brittle codebases where a minor patch in payment logic can unexpectedly break user authentication. Experienced tech leads do not advocate for complete system halts or year-long rewrites. Instead, disciplined organizations institutionalize a continuous refactoring quota: allocating roughly fifteen to twenty percent of engineering capacity every sprint to resolve architectural debt, upgrade dependencies, and improve automated regression coverage. This sustainable balance preserves delivery velocity while maintaining platform resilience.'
       },
@@ -402,6 +644,148 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       accepted_alternatives: ['B'],
       hint: 'Đọc câu: "allocating roughly fifteen to twenty percent of engineering capacity every sprint to resolve architectural debt..."',
       explanation_rule: 'Tác giả ủng hộ phương pháp tiếp cận bền vững: dành 15-20% công suất mỗi sprint để refactor liên tục.'
+    }
+  },
+  {
+    id: 'diag-read-b2-techdebt-2',
+    category: 'reading',
+    skillId: 'reading_detail_inference',
+    skillName: 'Reading Detail & Causal Inference',
+    difficulty: 'B2',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-read-b2-q2',
+      section: 'reading',
+      skill_id: 'reading_detail_inference',
+      skill_name: 'Reading Detail & Causal Inference',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'The Discipline of Technical Refactoring',
+        word_count: 145,
+        topic: 'Engineering Management',
+        text: 'When software startups transition into scaling companies, shortcuts taken during early product validation inevitably transform into systemic friction. Rushing features without modular architectural boundaries creates brittle codebases where a minor patch in payment logic can unexpectedly break user authentication. Experienced tech leads do not advocate for complete system halts or year-long rewrites. Instead, disciplined organizations institutionalize a continuous refactoring quota: allocating roughly fifteen to twenty percent of engineering capacity every sprint to resolve architectural debt, upgrade dependencies, and improve automated regression coverage. This sustainable balance preserves delivery velocity while maintaining platform resilience.'
+      },
+      prompt: 'According to the passage, what is an immediate risk of developing software without modular boundaries?',
+      options: [
+        { id: 'A', text: 'Engineering salaries become unsustainable' },
+        { id: 'B', text: 'A localized change in one component can break an unrelated system feature' },
+        { id: 'C', text: 'Startups lose the ability to validate early product features' },
+        { id: 'D', text: 'Automated tests run significantly faster than expected' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'A localized change in one component can break an unrelated system feature',
+      accepted_alternatives: ['B'],
+      hint: 'Hãy tìm ví dụ trong bài về "minor patch in payment logic" và "user authentication".',
+      explanation_rule: 'Đoạn văn chỉ rõ: thiếu tính module hóa khiến "a minor patch in payment logic can unexpectedly break user authentication".'
+    }
+  },
+  {
+    id: 'diag-read-b2-techdebt-3',
+    category: 'reading',
+    skillId: 'reading_vocabulary_in_context',
+    skillName: 'Vocabulary in Context & Synthesis',
+    difficulty: 'B2',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-read-b2-q3',
+      section: 'reading',
+      skill_id: 'reading_vocabulary_in_context',
+      skill_name: 'Vocabulary in Context & Synthesis',
+      question_type: 'reading_comprehension',
+      difficulty: 'B2',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'The Discipline of Technical Refactoring',
+        word_count: 145,
+        topic: 'Engineering Management',
+        text: 'When software startups transition into scaling companies, shortcuts taken during early product validation inevitably transform into systemic friction. Rushing features without modular architectural boundaries creates brittle codebases where a minor patch in payment logic can unexpectedly break user authentication. Experienced tech leads do not advocate for complete system halts or year-long rewrites. Instead, disciplined organizations institutionalize a continuous refactoring quota: allocating roughly fifteen to twenty percent of engineering capacity every sprint to resolve architectural debt, upgrade dependencies, and improve automated regression coverage. This sustainable balance preserves delivery velocity while maintaining platform resilience.'
+      },
+      prompt: 'In this context, what does the word "brittle" most closely mean?',
+      options: [
+        { id: 'A', text: 'Easily damaged or prone to failure under minor stress' },
+        { id: 'B', text: 'Highly flexible and adaptable to market demands' },
+        { id: 'C', text: 'Strictly secure against unauthorized access' },
+        { id: 'D', text: 'Extremely well-documented and transparent' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'Easily damaged or prone to failure under minor stress',
+      accepted_alternatives: ['A'],
+      hint: '"Brittle" trong vật lý nghĩa là giòn, dễ gãy; trong phần mềm là hệ thống dễ bị lỗi khi có thay đổi nhỏ.',
+      explanation_rule: '"Brittle codebases" là thuật ngữ chỉ mã nguồn dễ vỡ, dễ phát sinh lỗi khi bị tác động.'
+    }
+  },
+
+  // PASSAGE 3: Comprehensive / C1 (Asynchronous Culture & Cognitive Bandwidth) - 2 LINKED QUESTIONS
+  {
+    id: 'diag-read-c1-async-1',
+    category: 'reading',
+    skillId: 'reading_tone_implication_c1',
+    skillName: 'Synthesizing Tone & Implications (C1)',
+    difficulty: 'C1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-read-c1-q1',
+      section: 'reading',
+      skill_id: 'reading_tone_implication_c1',
+      skill_name: 'Synthesizing Tone & Implications',
+      question_type: 'reading_comprehension',
+      difficulty: 'C1',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Asynchronous Culture and Cognitive Bandwidth',
+        word_count: 168,
+        topic: 'Organizational Architecture',
+        text: 'The proliferation of enterprise messaging channels was heralded as the demise of bureaucratic latency. However, unconstrained immediacy has merely substituted scheduled meetings with perpetual micro-interruptions. When engineers are perpetually tethered to real-time notification streams, the requisite cognitive immersion for deep algorithmic design is systematically fragmented. Genuine asynchronous maturity is not merely the adoption of collaborative software; it is an organizational covenant. It requires deliberate default-to-documentation policies, generous response SLAs measured in hours rather than seconds, and executive validation that uninterrupted contemplation is fundamentally productive labor.'
+      },
+      prompt: 'What central paradox regarding real-time messaging does the author articulate?',
+      options: [
+        { id: 'A', text: 'Tools intended to eliminate latency have created continuous cognitive disruption' },
+        { id: 'B', text: 'Enterprise software has made scheduled meetings entirely obsolete' },
+        { id: 'C', text: 'Deep thinking is only achievable in traditional co-located offices' },
+        { id: 'D', text: 'Engineers prefer instant messaging over detailed documentation' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'Tools intended to eliminate latency have created continuous cognitive disruption',
+      accepted_alternatives: ['A'],
+      hint: 'Chú ý tương phản giữa "heralded as the demise of latency" và "perpetual micro-interruptions".',
+      explanation_rule: 'Nghịch lý được tác giả nêu: công cụ nhằm giảm độ trễ lại tạo ra sự phân mảnh chú ý liên tục.'
+    }
+  },
+  {
+    id: 'diag-read-c1-async-2',
+    category: 'reading',
+    skillId: 'reading_author_recommendation_c1',
+    skillName: 'Author Solution & Subtext (C1)',
+    difficulty: 'C1',
+    topic: 'workplace_tech',
+    question: {
+      id: 'dg-read-c1-q2',
+      section: 'reading',
+      skill_id: 'reading_author_recommendation_c1',
+      skill_name: 'Author Solution & Subtext',
+      question_type: 'reading_comprehension',
+      difficulty: 'C1',
+      context_topic: 'workplace_tech',
+      reading_passage: {
+        title: 'Asynchronous Culture and Cognitive Bandwidth',
+        word_count: 168,
+        topic: 'Organizational Architecture',
+        text: 'The proliferation of enterprise messaging channels was heralded as the demise of bureaucratic latency. However, unconstrained immediacy has merely substituted scheduled meetings with perpetual micro-interruptions. When engineers are perpetually tethered to real-time notification streams, the requisite cognitive immersion for deep algorithmic design is systematically fragmented. Genuine asynchronous maturity is not merely the adoption of collaborative software; it is an organizational covenant. It requires deliberate default-to-documentation policies, generous response SLAs measured in hours rather than seconds, and executive validation that uninterrupted contemplation is fundamentally productive labor.'
+      },
+      prompt: 'According to the author, what is essential for an organization to achieve true asynchronous maturity?',
+      options: [
+        { id: 'A', text: 'Requiring staff to respond to messages within five minutes' },
+        { id: 'B', text: 'Establishing cultural norms with documented context and flexible response expectations' },
+        { id: 'C', text: 'Banning all written communication in favor of daily standups' },
+        { id: 'D', text: 'Investing exclusively in automated code completion agents' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'Establishing cultural norms with documented context and flexible response expectations',
+      accepted_alternatives: ['B'],
+      hint: 'Tìm câu: "default-to-documentation policies, generous response SLAs measured in hours rather than seconds..."',
+      explanation_rule: 'Tác giả nhấn mạnh văn hóa ưu tiên tài liệu và khung thời gian phản hồi theo giờ thay vì giây.'
     }
   },
 

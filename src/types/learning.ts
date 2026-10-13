@@ -131,11 +131,16 @@ export interface AnswerEvaluation {
   decisive_clue: string;
   explanation: string;
   contrast_explanation?: string;
-  corrected_text?: string; // For writing
+  corrected_text?: string; // For writing: natural native phrasing preserving voice
   key_corrections?: Array<{
     original: string;
     corrected: string;
     reason: string;
+  }>;
+  useful_phrases?: Array<{
+    phrase: string;
+    meaning: string;
+    how_to_use?: string;
   }>;
   reusable_pattern?: string;
   error_tags: string[];
@@ -181,9 +186,9 @@ export interface LessonPlan {
   date: string;
   primary_objective: string;
   reason_for_selection: string;
-  estimated_duration_minutes: number; // 10, 15, 20, 25, 30, 35, 45
-  session_pace_mode?: 'quick_10' | 'focused_15' | 'standard_20' | 'extended_25' | 'deep_30' | 'mastery_35' | 'intensive_45';
-  total_planned_questions: number;
+  estimated_duration_minutes: number; // 10, 20, or 30
+  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
+  total_planned_questions: number; // e.g. 4 for 10m, 7 for 20m, 12 for 30m
   sections: LessonSectionPlan[];
   status: 'planned' | 'in_progress' | 'completed' | 'paused';
 }
@@ -198,7 +203,7 @@ export interface DailySummary {
   total_planned_questions?: number;
   time_spent_minutes?: number;
   target_duration_minutes?: number;
-  session_pace_mode?: 'quick_10' | 'focused_15' | 'standard_20' | 'extended_25' | 'deep_30' | 'mastery_35' | 'intensive_45';
+  session_pace_mode?: 'quick_10' | 'standard_20' | 'deep_30';
   accuracy_rate: number;
   key_takeaways: string[];
   vocabulary_learned: string[];
@@ -241,6 +246,31 @@ export interface DiscoveryState {
 
 export type DiagnosticMode = 'quick' | 'standard' | 'comprehensive';
 
+export interface DiagnosticSectionPlan {
+  section: SectionType;
+  title: string;
+  description: string;
+  weightPercentage: number; // e.g. 25 for 25%
+  targetQuestionsCount: number;
+  estimatedMinutes: number;
+  completed: boolean;
+}
+
+export interface DiagnosticAssessmentPlan {
+  mode: DiagnosticMode;
+  title: string;
+  subtitle: string;
+  targetDurationMinutes: number;
+  totalQuestions: number;
+  scoringWeights: {
+    grammar: number;
+    vocabulary: number;
+    reading: number;
+    writing: number;
+  };
+  sections: DiagnosticSectionPlan[];
+}
+
 export interface WritingRubricScore {
   accuracy: number; // 1-5
   vocabularyRange: number; // 1-5
@@ -280,7 +310,11 @@ export interface DiagnosticSession {
   sessionId: string;
   mode: DiagnosticMode;
   status: 'in_progress' | 'paused' | 'completed';
+  plan?: DiagnosticAssessmentPlan;
+  currentSectionIndex?: number;
+  questionIndexInSection?: number;
   currentIndex: number;
+  totalQuestions?: number;
   minQuestions: number;
   maxQuestions: number;
   history: DiagnosticItemAttempt[];
@@ -303,10 +337,24 @@ export interface DiagnosticReport {
   id: string;
   sessionId: string;
   mode: DiagnosticMode;
+  targetDurationMinutes?: number;
   completedAt: string;
+  overallScorePercentage?: number; // 0-100%
   overallCEFR: string;
   overallConfidence: 'low' | 'moderate' | 'high';
   overallSummary: string;
+  scoringWeights?: {
+    grammar: number;
+    vocabulary: number;
+    reading: number;
+    writing: number;
+  };
+  sectionScores?: {
+    grammar: { score: number; maxScore: number; percentage: number; cefr: string };
+    vocabulary: { score: number; maxScore: number; percentage: number; cefr: string };
+    reading: { score: number; maxScore: number; percentage: number; cefr: string };
+    writing: { score: number; maxScore: number; percentage: number; cefr: string };
+  };
   skillEstimates: {
     grammar: SkillProficiencyEstimate;
     vocabulary: SkillProficiencyEstimate;
@@ -353,15 +401,66 @@ export interface PersonalizedStudyPlan {
   createdAt: string;
 }
 
+export interface ActiveLessonState {
+  lessonId: string;
+  plan: LessonPlan;
+  currentSectionIndex: number;
+  questionIndexInSection: number;
+  currentQuestion: Question | null;
+  lastEvaluation: AnswerEvaluation | null;
+  lastUserAnswer: string;
+  attempts: Array<{ question: Question; evaluation: AnswerEvaluation; userAnswer: string }>;
+  sectionProgress: Record<number, number>;
+  status: 'not_started' | 'in_progress' | 'paused' | 'completed';
+  secondsElapsed: number;
+  updatedAt: string;
+}
+
 export interface LearningDataExport {
+  version: number;
   profile: UserProfile;
   skills: LearnerSkillState[];
   vocabulary: VocabularyItem[];
   attempts: Attempt[];
   lessons: LessonPlan[];
+  activeLesson?: ActiveLessonState | null;
   summaries: DailySummary[];
   discoveryState?: DiscoveryState;
+  diagnosticSession?: DiagnosticSession;
   diagnosticReports?: DiagnosticReport[];
   studyPlan?: PersonalizedStudyPlan;
   exported_at: string;
+}
+
+export interface SimilarWordComparison {
+  word: string;
+  nuance: string;
+  when_to_use: string;
+  example: string;
+}
+
+export interface DeepDiveChatMessage {
+  id: string;
+  role: 'user' | 'tutor';
+  content: string;
+  created_at: string;
+  examples?: string[];
+  similar_words_comparison?: SimilarWordComparison[];
+  suggestedFollowUps?: string[];
+}
+
+export interface DeepDiveInquiryRequest {
+  question: Question;
+  userAnswer: string;
+  evaluation?: AnswerEvaluation;
+  message: string;
+  history?: Array<{ role: 'user' | 'tutor'; content: string }>;
+  profile: UserProfile;
+}
+
+export interface DeepDiveInquiryResponse {
+  reply: string;
+  suggestedFollowUps?: string[];
+  examples?: string[];
+  similar_words_comparison?: SimilarWordComparison[];
 }
