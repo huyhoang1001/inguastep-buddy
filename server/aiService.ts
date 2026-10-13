@@ -1098,7 +1098,6 @@ Output strictly JSON:
         status: 'in_progress'
       };
     }
-    }
 
     // High quality deterministic fallback calibrated to the user's exact duration
     const grammarMins = Math.max(3, Math.round(duration * 0.3));
