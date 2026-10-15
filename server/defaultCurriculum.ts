@@ -161,17 +161,20 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
     id: 'vocab-b2-mitigate',
     section: 'vocabulary',
     skill_id: 'collocation_mitigate',
-    skill_name: 'Collocations with Mitigate',
+    skill_name: 'Contextual Meaning: Mitigate',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-mitigate',
       section: 'vocabulary',
       skill_id: 'collocation_mitigate',
-      skill_name: 'Collocations with Mitigate',
+      skill_name: 'Contextual Meaning: Mitigate',
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'meaning_from_context',
+      target_word: 'mitigate',
+      context_sentence: 'The engineering team configured aggressive automated rate-limiting, not to eliminate all traffic spikes, but to mitigate the severity of potential database overload.',
       vocab_card: {
         word: 'mitigate',
         part_of_speech: 'verb',
@@ -186,35 +189,43 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
           difference: '"mitigate" nhấn mạnh vào việc làm dịu bớt hậu quả tai hại; trong khi "minimize" nhấn mạnh vào việc giảm số lượng/quy mô xuống mức nhỏ nhất có thể.'
         }
       },
-      prompt: 'Choose the most natural collocation to complete the sentence:\n"To ____ the impact of unexpected database downtime, we configured automatic read replicas across two separate availability zones."',
+      prompt: 'Consider the sentence:\n"The engineering team configured aggressive automated rate-limiting, not to eliminate all traffic spikes, but to mitigate the severity of potential database overload."\n\nWhat does "mitigate" most accurately mean in this context?',
       options: [
-        { id: 'A', text: 'mitigate' },
-        { id: 'B', text: 'decline' },
-        { id: 'C', text: 'refuse' },
-        { id: 'D', text: 'fade' }
+        { id: 'A', text: 'Completely eradicate or prevent a danger before it can occur' },
+        { id: 'B', text: 'Make the severity, harm, or negative impact of a problem less intense' },
+        { id: 'C', text: 'Postpone or delay dealing with an incident until more engineers are available' },
+        { id: 'D', text: 'Formally document and report a software flaw to stakeholders' }
       ],
-      expected_answer_ids: ['A'],
-      expected_answer_text: 'mitigate',
-      accepted_alternatives: ['mitigate'],
-      hint: 'Từ nào thường đi kèm với danh từ "the impact" mang nghĩa làm giảm tác hại tiêu cực?',
-      explanation_rule: 'Collocation chuẩn trong môi trường chuyên nghiệp: "mitigate the impact / risk". Các từ khác (decline, refuse, fade) không kết hợp với tân ngữ "the impact" theo nghĩa này.'
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'Make the severity, harm, or negative impact of a problem less intense',
+      accepted_alternatives: ['B', 'Make the severity, harm, or negative impact of a problem less intense'],
+      hint: 'Chú ý vế trước: "not to eliminate all traffic spikes, but to...". "Mitigate" không mang nghĩa loại bỏ triệt để (eliminate), mà là giảm bớt hậu quả.',
+      explanation_rule: '"Mitigate" có nghĩa là làm giảm nhẹ tính chất nghiêm trọng hoặc tác hại của rủi ro. Đáp án B phản ánh chính xác. Đáp án A sai vì nhầm lẫn giữa "giảm nhẹ tác hại" và "loại bỏ hoàn toàn".',
+      reinforcement_prompt: {
+        secondary_context: 'Planting mangrove trees along the riverbank helped mitigate seasonal storm damage for downstream communities.',
+        application_prompt: 'Notice how "mitigate" pairs with nouns like "risk", "impact", "damage", and "loss" rather than people or positive states.',
+        expected_usage_tip: 'Use "mitigate" when an action softens the blow or dampens consequences without completely erasing the root cause.'
+      }
     }
   },
   {
     id: 'vocab-b2-streamline',
     section: 'vocabulary',
     skill_id: 'collocation_streamline',
-    skill_name: 'Collocations with Streamline',
+    skill_name: 'Usage Discrimination: Streamline',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-streamline',
       section: 'vocabulary',
       skill_id: 'collocation_streamline',
-      skill_name: 'Collocations with Streamline',
+      skill_name: 'Usage Discrimination: Streamline',
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'usage_discrimination',
+      target_word: 'streamline',
+      context_sentence: 'To prevent bureaucratic bottlenecks, the engineering organization took deliberate steps to streamline their release process.',
       vocab_card: {
         word: 'streamline',
         part_of_speech: 'verb',
@@ -229,35 +240,43 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
           difference: '"simplify" chỉ đơn thuần là làm cho dễ hiểu hơn; "streamline" ngụ ý loại bỏ các bước thừa mứa để hoạt động trơn tru và nhanh gọn hơn.'
         }
       },
-      prompt: 'Which word best fills the blank to describe eliminating redundant operational steps?\n"Our company upgraded its software infrastructure to ____ the customer onboarding process."',
+      prompt: 'Which of the following sentences uses the verb "streamline" correctly and naturally in a professional context?',
       options: [
-        { id: 'A', text: 'streamline' },
-        { id: 'B', text: 'elongate' },
-        { id: 'C', text: 'scatter' },
-        { id: 'D', text: 'postpone' }
+        { id: 'A', text: 'The DevOps lead implemented automated CI/CD checks to streamline our weekly deployment pipeline.' },
+        { id: 'B', text: 'After the retrospective, the junior engineer spent thirty minutes streamlining the messy conference room.' },
+        { id: 'C', text: 'Our server memory was low, so the team streamlined the instance RAM from 16GB to 64GB.' },
+        { id: 'D', text: 'Please remember to streamline your digital signature at the bottom of the non-disclosure agreement.' }
       ],
       expected_answer_ids: ['A'],
-      expected_answer_text: 'streamline',
-      accepted_alternatives: ['streamline'],
-      hint: 'Tìm từ mang nghĩa làm tinh gọn quy trình bằng cách cắt bỏ các bước rườm rà.',
-      explanation_rule: '"streamline the process" là collocation mang ý nghĩa tối ưu hoá và làm cho quy trình diễn ra nhanh chóng, trơn tru hơn.'
+      expected_answer_text: 'The DevOps lead implemented automated CI/CD checks to streamline our weekly deployment pipeline.',
+      accepted_alternatives: ['A', 'The DevOps lead implemented automated CI/CD checks to streamline our weekly deployment pipeline.'],
+      hint: '"Streamline" chỉ dùng cho các quy trình, hệ thống, hoặc dòng công việc để loại bỏ bước rườm rà — không dùng cho dọn dẹp phòng, nâng cấp phần cứng, hay ký tên.',
+      explanation_rule: '"Streamline" mang nghĩa tinh gọn một quy trình/dòng công việc (process, pipeline, workflow). Các lựa chọn B (dọn phòng -> tidy/clean), C (tăng RAM -> upgrade), D (ký tên -> affix/sign) đều sai kết hợp từ.',
+      reinforcement_prompt: {
+        secondary_context: 'The university launched a single-sign-on portal to streamline the financial aid application workflow.',
+        application_prompt: 'Pair "streamline" with abstract workflows (admissions, onboarding, billing, procurement).',
+        expected_usage_tip: 'Ask yourself: "Does this involve removing unnecessary steps from a multistep system?" If yes, "streamline" fits.'
+      }
     }
   },
   {
     id: 'vocab-b2-leverage',
     section: 'vocabulary',
     skill_id: 'collocation_leverage',
-    skill_name: 'Collocations with Leverage',
+    skill_name: 'Meaning Distinction: Leverage vs. Use',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-leverage',
       section: 'vocabulary',
       skill_id: 'collocation_leverage',
-      skill_name: 'Collocations with Leverage',
+      skill_name: 'Meaning Distinction: Leverage vs. Use',
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'meaning_distinction',
+      target_word: 'leverage',
+      context_sentence: 'Rather than developing a proprietary payment system from scratch, the startup decided to leverage pre-existing Stripe APIs to launch six months ahead of schedule.',
       vocab_card: {
         word: 'leverage',
         part_of_speech: 'verb',
@@ -272,18 +291,74 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
           difference: '"use" là sử dụng thông thường; "leverage" mang hàm ý tận dụng một đòn bẩy hoặc thế mạnh có sẵn để nhân đôi hiệu quả.'
         }
       },
-      prompt: 'Choose the best verb to describe taking strategic advantage of existing systems:\n"Rather than starting from scratch, we decided to ____ our existing cloud infrastructure."',
+      prompt: 'Consider the sentence:\n"Rather than developing a proprietary payment system from scratch, the startup decided to leverage pre-existing Stripe APIs to launch six months ahead of schedule."\n\nWhy is "leverage" the most accurate verb here instead of simply "use" or "employ"?',
       options: [
-        { id: 'A', text: 'leverage' },
-        { id: 'B', text: 'discard' },
-        { id: 'C', text: 'evade' },
-        { id: 'D', text: 'suppress' }
+        { id: 'A', text: 'Because "leverage" specifically indicates using an existing asset as a strategic multiplier to gain maximum advantage' },
+        { id: 'B', text: 'Because "leverage" is a mandatory legal term required when referencing third-party software SDKs' },
+        { id: 'C', text: 'Because "leverage" implies that the company plans to abandon external dependencies in the near future' },
+        { id: 'D', text: 'Because "leverage" indicates paying a recurring royalty fee to an external supplier' }
       ],
       expected_answer_ids: ['A'],
-      expected_answer_text: 'leverage',
-      accepted_alternatives: ['leverage'],
-      hint: 'Từ nào mang nghĩa tận dụng đòn bẩy/thế mạnh có sẵn trong môi trường công việc?',
-      explanation_rule: '"leverage existing infrastructure" là cách diễn đạt chuyên nghiệp phổ biến để chỉ việc tận dụng tối đa hệ thống đã có.'
+      expected_answer_text: 'Because "leverage" specifically indicates using an existing asset as a strategic multiplier to gain maximum advantage',
+      accepted_alternatives: ['A', 'Because "leverage" specifically indicates using an existing asset as a strategic multiplier to gain maximum advantage'],
+      hint: '"Leverage" bắt nguồn từ khái niệm đòn bẩy (lever): dùng một lực nhỏ ở điểm tựa để nâng một vật thể lớn.',
+      explanation_rule: '"Leverage" thể hiện hành động khai thác một thế mạnh hoặc công cụ có sẵn như một điểm tựa chiến lược để khuếch đại hiệu quả công việc, vượt trội hơn so với từ "use" đơn thuần.',
+      reinforcement_prompt: {
+        secondary_context: 'During international negotiations, the diplomat leveraged her fluency in three languages to establish immediate rapport.',
+        application_prompt: 'Think of "leverage" as applying a force multiplier (data, brand reputation, existing infrastructure).',
+        expected_usage_tip: 'Use "leverage" when highlighting strategic leverage rather than everyday consumption.'
+      }
+    }
+  },
+  {
+    id: 'vocab-b1-reluctant',
+    section: 'vocabulary',
+    skill_id: 'contextual_meaning_reluctant',
+    skill_name: 'Meaning from Context: Reluctant',
+    difficulty: 'B1',
+    context_topic: 'workplace_tech',
+    question: {
+      id: 'q-vocab-reluctant',
+      section: 'vocabulary',
+      skill_id: 'contextual_meaning_reluctant',
+      skill_name: 'Meaning from Context: Reluctant',
+      question_type: 'multiple_choice',
+      difficulty: 'B1',
+      context_topic: 'workplace_tech',
+      vocab_exercise_type: 'meaning_from_context',
+      target_word: 'reluctant',
+      context_sentence: 'Although she was fully qualified for the engineering lead role, Maya was reluctant to accept the promotion because it required relocating abroad.',
+      vocab_card: {
+        word: 'reluctant',
+        part_of_speech: 'adjective',
+        ipa: '/rɪˈlʌk.tənt/',
+        pronunciation_tip: 'Trọng âm rơi vào âm giữa: ri-LUK-tunt. Âm cuối /t/ rõ ràng.',
+        meaning: 'do dự, ngần ngại, miễn cưỡng không muốn làm điều gì đó vì có băn khoăn riêng',
+        collocation_pattern: 'reluctant to do something / reluctant agreement / reluctant participant',
+        example_general: 'He was reluctant to lend his car to someone he barely knew.',
+        example_workplace: 'The engineering team was reluctant to deprecate the legacy API without giving customers six months notice.',
+        similar_word_comparison: {
+          word: 'hesitant',
+          difference: '"hesitant" thường là do dự trong giây lát trước khi quyết định; "reluctant" thể hiện sự không sẵn lòng hoặc phản đối ngầm trong lòng.'
+        }
+      },
+      prompt: 'Read this scenario carefully:\n"Although she was fully qualified for the engineering lead role, Maya was reluctant to accept the promotion because it required relocating abroad."\n\nWhat does "reluctant" suggest about Maya\'s attitude?',
+      options: [
+        { id: 'A', text: 'She was eager and enthusiastic about moving to a new country for the promotion' },
+        { id: 'B', text: 'She felt hesitant and unwilling due to personal reservations despite her qualifications' },
+        { id: 'C', text: 'She lacked the technical competence and confidence needed for the managerial position' },
+        { id: 'D', text: 'She was officially barred by corporate human resources policy from accepting the position' }
+      ],
+      expected_answer_ids: ['B'],
+      expected_answer_text: 'She felt hesitant and unwilling due to personal reservations despite her qualifications',
+      accepted_alternatives: ['B', 'She felt hesitant and unwilling due to personal reservations despite her qualifications'],
+      hint: 'Hãy chú ý từ nối "Although" (mặc dù đủ năng lực nhưng...) và lý do "because it required relocating abroad".',
+      explanation_rule: '"Reluctant" diễn tả sự miễn cưỡng, ngần ngại không muốn làm điều gì vì lý do hoặc cảm giác cá nhân. Đáp án B thể hiện chính xác tâm lý này. Đáp án A là từ trái nghĩa, đáp án C mâu thuẫn với câu ("fully qualified").',
+      reinforcement_prompt: {
+        secondary_context: 'Customers were initially reluctant to adopt the new biometric authentication feature until clear privacy guidelines were published.',
+        application_prompt: 'Notice how "reluctant" is commonly followed by "to + infinitive": reluctant to change, reluctant to admit, reluctant to commit.',
+        expected_usage_tip: 'Use "reluctant" when a person or group holds back out of hesitation or unreadiness.'
+      }
     }
   },
 
@@ -535,17 +610,20 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
     id: 'vocab-b2-tradeoff',
     section: 'vocabulary',
     skill_id: 'collocation_tradeoff',
-    skill_name: 'Collocations with Trade-off',
+    skill_name: 'Contextual Cloze: Trade-off',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-tradeoff',
       section: 'vocabulary',
       skill_id: 'collocation_tradeoff',
-      skill_name: 'Collocations with Trade-off',
+      skill_name: 'Contextual Cloze: Trade-off',
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'contextual_cloze',
+      target_word: 'trade-off',
+      context_sentence: 'When choosing a database engine, architects must balance an inherent trade-off between absolute consistency and high availability.',
       vocab_card: {
         word: 'trade-off',
         part_of_speech: 'noun',
@@ -560,35 +638,43 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
           difference: '"compromise" thường mang sắc thái nhượng bộ hai bên; "trade-off" là sự cân nhắc kỹ thuật khách quan giữa hai thông số đối nghịch.'
         }
       },
-      prompt: 'Select the most natural phrase:\n"In distributed systems, there is an inherent ____ between instant consistency and high availability."',
+      prompt: 'Select the most precise word to complete the sentence:\n"In distributed architecture, there is always an inherent ____ between instant consistency and high query availability; gaining one often diminishes the other."',
       options: [
         { id: 'A', text: 'trade-off' },
-        { id: 'B', text: 'trade-in' },
-        { id: 'C', text: 'turn-around' },
-        { id: 'D', text: 'takeover' }
+        { id: 'B', text: 'bottleneck' },
+        { id: 'C', text: 'standstill' },
+        { id: 'D', text: 'drawback' }
       ],
       expected_answer_ids: ['A'],
       expected_answer_text: 'trade-off',
-      accepted_alternatives: ['trade-off', 'tradeoff'],
-      hint: 'Khái niệm đánh đổi giữa hai yếu tố (consistency và availability) trong định lý CAP.',
-      explanation_rule: '"an inherent trade-off between A and B" là cụm từ học thuật và kỹ thuật chuẩn xác.'
+      accepted_alternatives: ['A', 'trade-off', 'tradeoff'],
+      hint: 'Khái niệm chỉ một sự đánh đổi cân bằng giữa hai mục tiêu kỹ thuật đối nghịch nhau (được cái này thì mất cái kia).',
+      explanation_rule: '"an inherent trade-off between X and Y" là thuật ngữ kỹ thuật chỉ sự đánh đổi tất yếu giữa hai đặc tính. "Bottleneck" là nút thắt cổ chai, "drawback" là nhược điểm đơn thuần, "standstill" là sự đình trệ hoàn toàn.',
+      reinforcement_prompt: {
+        secondary_context: 'Remote working introduces a clear trade-off between flexible working hours and informal spontaneous communication.',
+        application_prompt: 'Use "trade-off" whenever two desirable properties conflict and require conscious prioritization.',
+        expected_usage_tip: 'Collocates with: make a trade-off, evaluate trade-offs, acceptable trade-off.'
+      }
     }
   },
   {
     id: 'vocab-b2-discrepancy',
     section: 'vocabulary',
     skill_id: 'collocation_discrepancy',
-    skill_name: 'Collocations with Discrepancy',
+    skill_name: 'Collocations & Meaning: Discrepancy',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-discrepancy',
       section: 'vocabulary',
       skill_id: 'collocation_discrepancy',
-      skill_name: 'Collocations with Discrepancy',
+      skill_name: 'Collocations & Meaning: Discrepancy',
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'collocations',
+      target_word: 'discrepancy',
+      context_sentence: 'During reconciliation, the financial auditor spotted an unexpected discrepancy between the reported cloud expenses and actual credit card charges.',
       vocab_card: {
         word: 'discrepancy',
         part_of_speech: 'noun',
@@ -603,54 +689,74 @@ export const DEFAULT_CURRICULUM: CurriculumItem[] = [
           difference: '"difference" chỉ sự khác biệt chung; "discrepancy" nhấn mạnh vào sai lệch bất thường cần được điều tra nguyên nhân.'
         }
       },
-      prompt: 'Choose the best word to describe an unexplained variance between recorded data sets:\n"During reconciliation, finance spotted a notable ____ between the invoice totals and the payment logs."',
+      prompt: 'Consider the sentence:\n"During the quarterly audit, finance spotted an unexpected discrepancy between the reported cloud expenses and the actual vendor invoices."\n\nWhat makes "discrepancy" the most fitting word here?',
       options: [
-        { id: 'A', text: 'discrepancy' },
-        { id: 'B', text: 'allegation' },
-        { id: 'C', text: 'redundancy' },
-        { id: 'D', text: 'substitute' }
+        { id: 'A', text: 'It denotes an unexplained variance between two sets of figures that ought to be identical' },
+        { id: 'B', text: 'It means an intentional discount negotiated between business partners' },
+        { id: 'C', text: 'It refers to an official penalty fee imposed for late payment' },
+        { id: 'D', text: 'It indicates a standard periodic depreciation calculated for accounting assets' }
       ],
       expected_answer_ids: ['A'],
-      expected_answer_text: 'discrepancy',
-      accepted_alternatives: ['discrepancy'],
-      hint: 'Từ nào mang nghĩa sự chênh lệch hoặc sai khác bất thường giữa hai số liệu?',
-      explanation_rule: '"a discrepancy between X and Y" là từ chuyên ngành chỉ sai lệch số liệu cần đối chiếu và xử lý.'
+      expected_answer_text: 'It denotes an unexplained variance between two sets of figures that ought to be identical',
+      accepted_alternatives: ['A', 'It denotes an unexplained variance between two sets of figures that ought to be identical'],
+      hint: '"Discrepancy" dùng khi hai nguồn dữ liệu đáng lẽ phải giống nhau nhưng lại xuất hiện sự sai lệch bất thường.',
+      explanation_rule: '"Discrepancy" là thuật ngữ kiểm toán và phân tích kỹ thuật chỉ sự chênh lệch/bất nhất giữa hai tập dữ liệu cần đối soát và giải trình.',
+      reinforcement_prompt: {
+        secondary_context: 'Security logs revealed a puzzling discrepancy between badge swipe records and workstation login timestamps.',
+        application_prompt: 'Pair "discrepancy" with words like: unexplained, flag, reconcile, account for.',
+        expected_usage_tip: 'Use "discrepancy" when numbers, records, or accounts conflict and prompt an investigation.'
+      }
     }
   },
   {
     id: 'vocab-b2-robust',
     section: 'vocabulary',
     skill_id: 'collocation_robust',
-    skill_name: 'Collocations with Robust',
+    skill_name: 'Meaning from Context: Robust',
     difficulty: 'B2',
     context_topic: 'workplace_tech',
     question: {
       id: 'q-vocab-robust',
       section: 'vocabulary',
       skill_id: 'collocation_robust',
-      skill_name: 'Collocations with Robust',
-      question_type: 'fill_in_blank',
+      skill_name: 'Meaning from Context: Robust',
+      question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
+      vocab_exercise_type: 'meaning_from_context',
+      target_word: 'robust',
+      context_sentence: 'Although the prototype was lightweight, the principal engineer insisted on building a robust data processing pipeline capable of recovering autonomously from node failures.',
       vocab_card: {
         word: 'robust',
         part_of_speech: 'adjective',
         ipa: '/roʊˈbʌst/',
         pronunciation_tip: 'Trọng âm rơi vào âm thứ hai: ro-BUST. Âm đuôi /st/ phát âm rõ.',
-        meaning: 'vững chắc, có khả năng chịu tải tốt và không dễ bị lỗi khi gặp điều kiện bất lợi',
-        collocation_pattern: 'robust architecture / testing suite / solution / security',
-        example_general: 'A robust economy can recover quickly from seasonal downturns.',
+        meaning: 'vững chắc, kiên cường, có khả năng chịu tải tốt và tự phục hồi khi gặp sự cố bất lợi',
+        collocation_pattern: 'robust architecture / testing suite / pipeline / security',
+        example_general: 'A robust healthcare system can withstand sudden epidemic outbreaks.',
         example_workplace: 'We need to engineer a robust caching mechanism to withstand sudden traffic spikes.',
         similar_word_comparison: {
           word: 'strong',
           difference: '"strong" chỉ sức mạnh nói chung; "robust" đặc biệt mô tả hệ thống kiên cố, bền bỉ và có khả năng chống chịu lỗi ngoại cảnh.'
         }
       },
-      prompt: 'Fill in the blank with the appropriate adjective meaning sturdy and resilient under pressure:\n"To handle millions of concurrent requests, our team built a highly _________ data processing pipeline."',
-      expected_answer_text: 'robust',
-      accepted_alternatives: ['robust', 'resilient'],
-      hint: 'Bắt đầu bằng chữ "r". Thường dùng để chỉ kiến trúc hệ thống hoặc giải pháp bền bỉ chịu tải.',
-      explanation_rule: '"a robust pipeline / architecture" là collocation chuẩn quốc tế trong thiết kế phần mềm.'
+      prompt: 'Read the following sentence:\n"Although the prototype was lightweight, the principal engineer insisted on building a robust data processing pipeline capable of recovering autonomously from node failures."\n\nWhat does "robust" emphasize about the system design?',
+      options: [
+        { id: 'A', text: 'Resilience and the ability to continue operating effectively under stress or failure conditions' },
+        { id: 'B', text: 'Simplicity and the minimal number of lines of source code required to implement' },
+        { id: 'C', text: 'Low hardware cost and reliance on open-source public cloud tiers' },
+        { id: 'D', text: 'An aesthetic and modern visual user interface design' }
+      ],
+      expected_answer_ids: ['A'],
+      expected_answer_text: 'Resilience and the ability to continue operating effectively under stress or failure conditions',
+      accepted_alternatives: ['A', 'Resilience and the ability to continue operating effectively under stress or failure conditions'],
+      hint: 'Chú ý vế sau: "...capable of recovering autonomously from node failures" (có khả năng tự phục hồi khi node bị lỗi).',
+      explanation_rule: 'Trong kỹ thuật phần mềm, "robust" miêu tả một kiến trúc có độ bền cao, chịu tải tốt và chống chịu được các sự cố bất ngờ.',
+      reinforcement_prompt: {
+        secondary_context: 'The company established a robust disaster recovery plan to ensure business continuity.',
+        application_prompt: 'Use "robust" to describe processes, architectures, test suites, or methodologies that do not break easily.',
+        expected_usage_tip: 'Common collocations: robust architecture, robust error handling, robust evidence.'
+      }
     }
   },
 

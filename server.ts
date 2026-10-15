@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { aiService } from './server/aiService.js';
 import { budgetManager } from './server/usageBudget.js';
+import { classifyGeminiError, AIException } from './server/aiErrors.js';
 import {
   UserProfile,
   LessonPlan,
@@ -28,6 +29,27 @@ const PORT = 3000;
 app.use(express.json({ limit: '2mb' }));
 
 /**
+ * Standardized AI Route Error Handler.
+ * Returns consistent error payloads across all endpoints.
+ */
+export function handleAiRouteError(res: Response, err: any) {
+  const classified = classifyGeminiError(err);
+  const status =
+    classified.code === 'QUOTA_EXHAUSTED' || classified.code === 'RATE_LIMITED' ? 429
+    : classified.code === 'AUTH_FAILED' ? 401
+    : classified.code === 'TIMEOUT' || classified.code === 'SERVICE_UNAVAILABLE' ? 503
+    : classified.code === 'INVALID_REQUEST' ? 400
+    : 500;
+
+  return res.status(status).json({
+    error: classified.userMessage,
+    code: classified.code,
+    retryable: classified.retryable,
+    retryAfterSeconds: classified.retryAfterSeconds
+  });
+}
+
+/**
  * Middleware: Rate limiting & AI usage budget control.
  * Local-first architecture: The server does NOT store personal learning data,
  * but protects the owner's Gemini API key by tracking client IP requests against
@@ -43,8 +65,16 @@ function checkAIBudget(req: Request, res: Response, next: NextFunction) {
 
   const allowance = budgetManager.checkAllowance(clientId);
   if (!allowance.allowed) {
+    const isRateLimited = Boolean(allowance.retryAfterSeconds);
+    const code = isRateLimited ? 'RATE_LIMITED' : 'QUOTA_EXHAUSTED';
+    const errorMsg = allowance.reason || (isRateLimited
+      ? 'AI service is temporarily busy due to rate limits. Please wait a moment before trying again.'
+      : "AI usage limit reached. We're unable to process your request right now. Please try again later.");
+
     return res.status(429).json({
-      error: allowance.reason || 'AI request limit reached for today.',
+      error: errorMsg,
+      code,
+      retryable: isRateLimited,
       retryAfterSeconds: allowance.retryAfterSeconds
     });
   }
@@ -93,7 +123,7 @@ app.post('/api/ai/lesson-plan', checkAIBudget, async (req: Request, res: Respons
     const plan = await aiService.generateLessonPlan(profile, skills, recentErrors);
     res.json(plan);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to generate lesson plan.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -116,7 +146,7 @@ app.post('/api/ai/lesson-question', checkAIBudget, async (req: Request, res: Res
     );
     res.json(question);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to generate question.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -132,7 +162,7 @@ app.post('/api/ai/lesson-evaluate', checkAIBudget, async (req: Request, res: Res
     // Server does NOT store this attempt. Result is returned for client-side persistence in IndexedDB.
     res.json(evaluation);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to evaluate answer.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -147,7 +177,7 @@ app.post('/api/ai/tutor-assist', checkAIBudget, async (req: Request, res: Respon
     const response = await aiService.tutorAssist(question, action, profile);
     res.json(response);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to request tutor assistance.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -162,7 +192,7 @@ app.post('/api/ai/deep-dive', checkAIBudget, async (req: Request, res: Response)
     const response = await aiService.deepDiveInquiry(question, userAnswer, evaluation, message, history, profile);
     res.json(response);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to process tutor deep-dive inquiry.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -177,7 +207,7 @@ app.post('/api/ai/lesson-summary', checkAIBudget, async (req: Request, res: Resp
     const summary = await aiService.generateLessonSummary(lesson, attempts, profile, timeSpentMinutes);
     res.json(summary);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to generate lesson summary.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -192,7 +222,7 @@ app.post('/api/ai/discovery-turn', checkAIBudget, async (req: Request, res: Resp
     const result = await aiService.handleDiscoveryTurn(history, userMessage, profile);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to process discovery turn.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -207,7 +237,7 @@ app.post('/api/ai/diagnostic-question', checkAIBudget, async (req: Request, res:
     const question = await aiService.generateAdaptiveDiagnosticQuestion(session, profile);
     res.json(question);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to generate diagnostic question.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -222,7 +252,7 @@ app.post('/api/ai/diagnostic-evaluate', checkAIBudget, async (req: Request, res:
     const result = await aiService.evaluateDiagnosticAnswer(question, userAnswer, profile);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to evaluate diagnostic answer.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -237,7 +267,7 @@ app.post('/api/ai/diagnostic-report', checkAIBudget, async (req: Request, res: R
     const report = await aiService.computeDiagnosticReport(session, profile);
     res.json(report);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to compute diagnostic report.' });
+    handleAiRouteError(res, err);
   }
 });
 
@@ -252,7 +282,7 @@ app.post('/api/ai/diagnostic-study-plan', checkAIBudget, async (req: Request, re
     const plan = await aiService.generatePersonalizedStudyPlan(report, profile);
     res.json(plan);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to generate personalized study plan.' });
+    handleAiRouteError(res, err);
   }
 });
 

@@ -28,6 +28,13 @@ if (res4.status !== 0) {
   process.exit(1);
 }
 
+console.log('\nRunning test suite 5: AI Quota & Error Handling Tests...');
+const res5 = spawnSync('npx', ['tsx', 'test/ai_quota_and_error_handling.test.ts'], { stdio: 'inherit' });
+if (res5.status !== 0) {
+  console.error('AI quota and error handling tests failed.');
+  process.exit(1);
+}
+
 console.log('\n======================================================');
 console.log('ALL TEST SUITES COMPLETED SUCCESSFULLY!');
 console.log('======================================================');

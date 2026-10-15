@@ -21,6 +21,7 @@ import {
   sendDiscoveryMessage,
   confirmDiscovery
 } from '../services/api.ts';
+import { AIErrorAlert } from './AIErrorAlert.tsx';
 
 interface ConversationalDiscoveryProps {
   currentProfile: UserProfile;
@@ -37,6 +38,8 @@ export const ConversationalDiscovery: React.FC<ConversationalDiscoveryProps> = (
   const [inputText, setInputText] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSending, setIsSending] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<any>(null);
+  const [failedText, setFailedText] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,6 +66,8 @@ export const ConversationalDiscovery: React.FC<ConversationalDiscoveryProps> = (
     const text = textToSend || inputText;
     if (!text.trim() || isSending) return;
 
+    setAiError(null);
+    setFailedText('');
     setInputText('');
     setIsSending(true);
 
@@ -71,6 +76,9 @@ export const ConversationalDiscovery: React.FC<ConversationalDiscoveryProps> = (
       setDiscoveryState(updated);
     } catch (err) {
       console.error('Failed to send message:', err);
+      setAiError(err);
+      setFailedText(text);
+      setInputText(text); // Preserve user's input so they can easily retry
     } finally {
       setIsSending(false);
     }
@@ -247,6 +255,20 @@ export const ConversationalDiscovery: React.FC<ConversationalDiscoveryProps> = (
             </button>
           ))}
         </div>
+      )}
+
+      {/* AI Quota / Service Error Alert */}
+      {aiError && (
+        <AIErrorAlert
+          error={aiError}
+          onRetry={failedText ? () => handleSendMessage(failedText) : undefined}
+          onDismiss={() => {
+            setAiError(null);
+            setFailedText('');
+          }}
+          compact
+          className="mb-2"
+        />
       )}
 
       {/* Input box */}

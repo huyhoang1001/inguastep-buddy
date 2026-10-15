@@ -68,6 +68,17 @@ export interface LearnerSkillState {
   recurring_errors: string[];
 }
 
+export type VocabExerciseType =
+  | 'meaning_from_context'
+  | 'contextual_cloze'
+  | 'usage_discrimination'
+  | 'collocations'
+  | 'meaning_distinction'
+  | 'sentence_application'
+  | 'retrieval_practice';
+
+export type VocabMasteryStage = 'encountered' | 'practicing' | 'retrieved' | 'applied' | 'mastered';
+
 export interface VocabularyItem {
   id: string;
   word: string;
@@ -83,6 +94,11 @@ export interface VocabularyItem {
     difference: string;
   };
   review_stage: 1 | 3 | 7 | 14 | 30; // Spaced repetition interval in days
+  mastery_stage?: VocabMasteryStage;
+  mastery_score?: number; // 0-100
+  contexts_encountered?: string[];
+  exercise_types_passed?: VocabExerciseType[];
+  common_confusions?: string[];
   next_review_at: string;
   first_seen_at: string;
   last_reviewed_at: string;
@@ -112,8 +128,18 @@ export interface Question {
     word_count: number;
     topic: string;
   };
-  vocab_card?: Omit<VocabularyItem, 'id' | 'review_stage' | 'next_review_at' | 'first_seen_at' | 'last_reviewed_at' | 'times_correct' | 'times_incorrect'>;
+  vocab_card?: Omit<VocabularyItem, 'id' | 'review_stage' | 'next_review_at' | 'first_seen_at' | 'last_reviewed_at' | 'times_correct' | 'times_incorrect' | 'mastery_stage' | 'mastery_score' | 'contexts_encountered' | 'exercise_types_passed' | 'common_confusions'>;
   
+  // Vocabulary pedagogical fields
+  vocab_exercise_type?: VocabExerciseType;
+  target_word?: string;
+  context_sentence?: string; // Sentence with target word highlighted or blanked
+  reinforcement_prompt?: {
+    secondary_context: string;
+    application_prompt: string;
+    expected_usage_tip: string;
+  };
+
   prompt: string;
   options?: QuestionOption[];
   expected_answer_ids?: string[];
@@ -131,6 +157,13 @@ export interface AnswerEvaluation {
   decisive_clue: string;
   explanation: string;
   contrast_explanation?: string;
+  vocab_mastery_update?: {
+    word: string;
+    previous_stage: VocabMasteryStage;
+    new_stage: VocabMasteryStage;
+    score: number;
+    explanation: string;
+  };
   corrected_text?: string; // For writing: natural native phrasing preserving voice
   key_corrections?: Array<{
     original: string;

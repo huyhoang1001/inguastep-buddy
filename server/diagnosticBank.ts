@@ -352,18 +352,18 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       question_type: 'multiple_choice',
       difficulty: 'A2',
       context_topic: 'general',
-      prompt: 'Please remember to ____ the documents to your manager before the end of the day.',
+      prompt: 'Please remember to ____ the signed contract to your department manager before 5 PM.',
       options: [
         { id: 'A', text: 'send' },
-        { id: 'B', text: 'listen' },
-        { id: 'C', text: 'drink' },
-        { id: 'D', text: 'sleep' }
+        { id: 'B', text: 'remind' },
+        { id: 'C', text: 'attend' },
+        { id: 'D', text: 'listen' }
       ],
       expected_answer_ids: ['A'],
       expected_answer_text: 'send',
       accepted_alternatives: ['send'],
-      hint: 'Động từ nào chỉ việc chuyển giao hoặc gửi tài liệu cho người khác?',
-      explanation_rule: '"Send documents to someone" là cụm từ chỉ việc gửi tài liệu.'
+      hint: 'Động từ nào chỉ việc gửi hoặc chuyển giao tài liệu ("the signed contract to your manager")?',
+      explanation_rule: '"Send [something] to [someone]" là cấu trúc chính xác. "Remind" đòi hỏi tân ngữ người ("remind someone of something"), "attend" không đi với giới từ to theo nghĩa này.'
     }
   },
   {
@@ -439,18 +439,18 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       question_type: 'multiple_choice',
       difficulty: 'B2',
       context_topic: 'workplace_tech',
-      prompt: 'To ____ the financial risk of exchange rate fluctuations, the CFO recommended hedging options.',
+      prompt: 'To ____ the financial risk of sudden foreign exchange fluctuations, the CFO recommended hedging options.',
       options: [
         { id: 'A', text: 'mitigate' },
-        { id: 'B', text: 'abandon' },
-        { id: 'C', text: 'decline' },
-        { id: 'D', text: 'vanish' }
+        { id: 'B', text: 'aggravate' },
+        { id: 'C', text: 'defer' },
+        { id: 'D', text: 'forfeit' }
       ],
       expected_answer_ids: ['A'],
       expected_answer_text: 'mitigate',
       accepted_alternatives: ['mitigate'],
-      hint: 'Từ chuyên ngành mang nghĩa "giảm nhẹ mức độ rủi ro/thiệt hại"?',
-      explanation_rule: '"mitigate the risk" là collocation chuẩn chỉ việc làm giảm nhẹ rủi ro.'
+      hint: 'Từ chuyên ngành mang nghĩa "làm giảm bớt mức độ nghiêm trọng của rủi ro"?',
+      explanation_rule: '"Mitigate the risk" là collocation chuẩn chỉ việc làm giảm nhẹ rủi ro. "Aggravate" là làm trầm trọng hơn (trái nghĩa), "defer" là hoãn lại, "forfeit" là đánh mất/từ bỏ quyền lợi.'
     }
   },
   {
@@ -471,15 +471,15 @@ export const DIAGNOSTIC_BANK: DiagnosticBankItem[] = [
       prompt: 'Every architectural decision involves a ____ between rapid feature delivery and long-term maintainability.',
       options: [
         { id: 'A', text: 'trade-off' },
-        { id: 'B', text: 'collision' },
+        { id: 'B', text: 'bottleneck' },
         { id: 'C', text: 'standstill' },
-        { id: 'D', text: 'repetition' }
+        { id: 'D', text: 'fallback' }
       ],
       expected_answer_ids: ['A'],
       expected_answer_text: 'trade-off',
       accepted_alternatives: ['trade-off'],
-      hint: 'Thuật ngữ chỉ sự đánh đổi hoặc cân nhắc giữa hai yếu tố mâu thuẫn.',
-      explanation_rule: '"trade-off" là sự đánh đổi giữa hai tiêu chí (ví dụ: tốc độ release vs tính bền vững của mã nguồn).'
+      hint: 'Thuật ngữ chỉ sự đánh đổi hoặc cân nhắc giữa hai yếu tố đối nghịch.',
+      explanation_rule: '"Trade-off" là sự đánh đổi giữa hai tiêu chí đối nghịch (tốc độ ra mắt tính năng vs khả năng bảo trì mã nguồn).'
     }
   },
   {

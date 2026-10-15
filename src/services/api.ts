@@ -27,6 +27,33 @@ import { BudgetLimits, UserAccount, AuthSessionResponse } from '../types/auth.ts
 // Re-export localStore for components that access it directly
 export { localStore };
 
+export class AIClientError extends Error {
+  public code: string;
+  public retryable: boolean;
+  public retryAfterSeconds?: number;
+  public userMessage: string;
+
+  constructor(message: string, code: string = 'GENERAL_ERROR', retryable = false, retryAfterSeconds?: number) {
+    super(message);
+    this.name = 'AIClientError';
+    this.code = code;
+    this.userMessage = message;
+    this.retryable = retryable;
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+async function parseAIResponse<T>(res: Response, fallbackMessage: string): Promise<T> {
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const message = data.error || fallbackMessage;
+    const code = data.code || (res.status === 429 ? 'QUOTA_EXHAUSTED' : 'GENERAL_ERROR');
+    const retryable = data.retryable !== undefined ? data.retryable : (res.status === 429 && Boolean(data.retryAfterSeconds));
+    throw new AIClientError(message, code, retryable, data.retryAfterSeconds);
+  }
+  return res.json();
+}
+
 // =========================================================================
 // AUTH & SESSION (CLIENT-MANAGED / LOCAL-FIRST)
 // =========================================================================
@@ -261,12 +288,7 @@ export async function generateLessonPlan(dailyMinutes?: number, forceRegenerate?
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to generate lesson plan');
-  }
-
-  const plan: LessonPlan = await res.json();
+  const plan: LessonPlan = await parseAIResponse<LessonPlan>(res, 'Failed to generate lesson plan');
   await localStore.saveLesson(plan);
 
   // Initialize active lesson in local storage for instant resumption
@@ -312,12 +334,7 @@ export async function generateQuestion(
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to generate question');
-  }
-
-  const question: Question = await res.json();
+  const question: Question = await parseAIResponse<Question>(res, 'Failed to generate question');
 
   // If question introduces a vocab card, save it locally in IndexedDB
   if (question.vocab_card) {
@@ -344,12 +361,7 @@ export async function evaluateAnswer(
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to evaluate answer');
-  }
-
-  const evaluation: AnswerEvaluation = await res.json();
+  const evaluation: AnswerEvaluation = await parseAIResponse<AnswerEvaluation>(res, 'Failed to evaluate answer');
 
   // Persist attempt locally in IndexedDB and update mastery metrics
   const attempt: Attempt = {
@@ -366,18 +378,23 @@ export async function evaluateAnswer(
 
   await localStore.recordAttempt(attempt);
 
-  // If vocab card, update review stage locally
-  if (question.vocab_card) {
+  // If vocabulary question or card, record evidence-based mastery locally
+  const targetWord = question.target_word || question.vocab_card?.word;
+  if (targetWord || question.section === 'vocabulary') {
+    const wordKey = targetWord || question.skill_name.replace(/^Collocations with /i, '').trim();
     const isCorrect = evaluation.verdict === 'correct';
-    const vocabList = await localStore.getVocabulary();
-    const existing = vocabList.find(v => v.word.toLowerCase() === question.vocab_card!.word.toLowerCase());
-    if (existing) {
-      await localStore.saveVocabularyItem({
-        ...existing,
-        times_correct: existing.times_correct + (isCorrect ? 1 : 0),
-        times_incorrect: existing.times_incorrect + (isCorrect ? 0 : 1),
-        review_stage: isCorrect ? Math.min(30, (existing.review_stage * 2 || 3)) as any : 1
+    try {
+      const masteryResult = await localStore.recordVocabularyEvidence({
+        word: wordKey,
+        cardData: question.vocab_card,
+        isCorrect,
+        contextSentence: question.context_sentence || question.prompt,
+        exerciseType: question.vocab_exercise_type || 'contextual_cloze',
+        confusedWith: !isCorrect ? userAnswer : undefined
       });
+      evaluation.vocab_mastery_update = masteryResult.update;
+    } catch (e) {
+      console.warn('Failed to record vocabulary evidence:', e);
     }
   }
 
@@ -400,12 +417,7 @@ export async function requestTutorAssist(
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to get tutor assist');
-  }
-
-  return res.json();
+  return parseAIResponse<TutorAssistantResponse>(res, 'Failed to get tutor assist');
 }
 
 export async function tutorDeepDive(
@@ -430,12 +442,7 @@ export async function tutorDeepDive(
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to process tutor inquiry');
-  }
-
-  return res.json();
+  return parseAIResponse<DeepDiveInquiryResponse>(res, 'Failed to process tutor inquiry');
 }
 
 export async function generateLessonSummary(
@@ -456,12 +463,7 @@ export async function generateLessonSummary(
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to generate lesson summary');
-  }
-
-  const summary: DailySummary = await res.json();
+  const summary: DailySummary = await parseAIResponse<DailySummary>(res, 'Failed to generate lesson summary');
 
   // Save summary locally in IndexedDB
   await localStore.saveSummary(summary);
@@ -537,12 +539,7 @@ export async function sendDiscoveryMessage(message: string): Promise<DiscoverySt
     })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to process discovery turn');
-  }
-
-  const result = await res.json();
+  const result = await parseAIResponse<any>(res, 'Failed to process discovery turn');
 
   // Add tutor reply
   state.messages.push({
@@ -629,12 +626,7 @@ export async function startDiagnosticSession(mode: DiagnosticMode = 'standard'):
     body: JSON.stringify({ session: initialSession, profile })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to start diagnostic assessment');
-  }
-
-  const question: Question = await res.json();
+  const question: Question = await parseAIResponse<Question>(res, 'Failed to start diagnostic assessment');
   initialSession.currentQuestion = question;
 
   await localStore.saveDiagnosticSession(initialSession);
@@ -661,12 +653,7 @@ export async function getNextDiagnosticQuestion(): Promise<{ question: Question;
     body: JSON.stringify({ session, profile })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to get next diagnostic question');
-  }
-
-  const question: Question = await res.json();
+  const question: Question = await parseAIResponse<Question>(res, 'Failed to get next diagnostic question');
   session.currentQuestion = question;
   session.currentIndex = session.history.length + 1;
   session.lastActiveAt = new Date().toISOString();
@@ -710,12 +697,7 @@ export async function submitDiagnosticAnswer(
     body: JSON.stringify({ question, userAnswer, profile })
   });
 
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error || 'Failed to evaluate diagnostic answer');
-  }
-
-  const { evaluation, writingRubric } = await res.json();
+  const { evaluation, writingRubric } = await parseAIResponse<{ evaluation: AnswerEvaluation; writingRubric?: WritingRubricScore }>(res, 'Failed to evaluate diagnostic answer');
 
   // Record attempt locally in session history
   session.history.push({
@@ -801,8 +783,7 @@ export async function completeDiagnosticSession(): Promise<{
     body: JSON.stringify({ session, profile })
   });
 
-  if (!repRes.ok) throw new Error('Failed to compute diagnostic report');
-  const report: DiagnosticReport = await repRes.json();
+  const report: DiagnosticReport = await parseAIResponse<DiagnosticReport>(repRes, 'Failed to compute diagnostic report');
   await localStore.saveDiagnosticReport(report);
 
   // Generate personalized study plan
@@ -812,8 +793,7 @@ export async function completeDiagnosticSession(): Promise<{
     body: JSON.stringify({ report, profile })
   });
 
-  if (!planRes.ok) throw new Error('Failed to generate personalized study plan');
-  const studyPlan: PersonalizedStudyPlan = await planRes.json();
+  const studyPlan: PersonalizedStudyPlan = await parseAIResponse<PersonalizedStudyPlan>(planRes, 'Failed to generate personalized study plan');
   await localStore.saveStudyPlan(studyPlan);
 
   // Update profile level in local storage

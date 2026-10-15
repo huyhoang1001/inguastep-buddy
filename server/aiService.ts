@@ -25,6 +25,9 @@ import { DEFAULT_CURRICULUM } from './defaultCurriculum.js';
 import { DIAGNOSTIC_BANK, DiagnosticBankItem } from './diagnosticBank.js';
 import { budgetManager } from './usageBudget.js';
 import { contentCache } from './contentCache.js';
+import { AIException, classifyGeminiError, type AIErrorCode } from './aiErrors.js';
+
+export { AIException, classifyGeminiError, type AIErrorCode };
 
 export interface LearningModelProvider {
   generateLessonPlan(
@@ -141,6 +144,10 @@ export class GeminiLearningProvider implements LearningModelProvider {
     this.quotaCooldownUntil = 0;
   }
 
+  public clearQuotaCooldown(): void {
+    this.quotaCooldownUntil = 0;
+  }
+
   private cleanJson(text: string): string {
     let clean = text.trim();
     if (clean.startsWith('```json')) {
@@ -173,12 +180,35 @@ export class GeminiLearningProvider implements LearningModelProvider {
       if (!allowance.allowed) {
         console.warn(`[Budget] User '${userId}' rejected: ${allowance.reason}`);
         budgetManager.recordUsage(userId, 'rate_limited', operation, 0, 0, 'rate_limited', allowance.reason);
-        return null;
+        if (allowance.retryAfterSeconds) {
+          throw new AIException(
+            'RATE_LIMITED',
+            allowance.reason || 'AI service is temporarily busy due to rate limits. Please wait a moment before trying again.',
+            { retryable: true, retryAfterSeconds: allowance.retryAfterSeconds }
+          );
+        } else {
+          throw new AIException(
+            'QUOTA_EXHAUSTED',
+            allowance.reason || "AI usage limit reached. We're unable to process your request right now. Please try again later.",
+            { retryable: false }
+          );
+        }
       }
       budgetManager.startRequest(userId);
     }
 
     try {
+      if (this.isQuotaExhausted()) {
+        if (userId !== 'system') {
+          budgetManager.recordUsage(userId, 'cooldown', operation, 0, 0, 'rate_limited', 'Global quota cooldown');
+        }
+        throw new AIException(
+          'QUOTA_EXHAUSTED',
+          "AI usage limit reached. We're unable to process your request right now. Please try again later.",
+          { retryable: false }
+        );
+      }
+
       // If a test mock handler is registered, use it without network calls
       if (this.mockHandler) {
         try {
@@ -188,10 +218,14 @@ export class GeminiLearningProvider implements LearningModelProvider {
           }
           return mocked as T;
         } catch (err: any) {
+          const classified = classifyGeminiError(err);
+          if (classified.code === 'QUOTA_EXHAUSTED' || classified.code === 'RATE_LIMITED') {
+            this.quotaCooldownUntil = Date.now() + 60 * 1000;
+          }
           if (userId !== 'system') {
             budgetManager.recordUsage(userId, 'mock-model', operation, estInputTokens, 0, 'error', err?.message);
           }
-          return null;
+          throw classified;
         }
       }
 
@@ -199,15 +233,14 @@ export class GeminiLearningProvider implements LearningModelProvider {
         if (userId !== 'system') {
           budgetManager.recordUsage(userId, 'none', operation, 0, 0, 'error', 'AI client not initialized');
         }
-        return null;
+        throw new AIException(
+          'AUTH_FAILED',
+          "AI service authentication failed. The service is temporarily unable to verify credentials.",
+          { retryable: false }
+        );
       }
 
-      if (this.isQuotaExhausted()) {
-        if (userId !== 'system') {
-          budgetManager.recordUsage(userId, 'cooldown', operation, 0, 0, 'rate_limited', 'Global quota cooldown');
-        }
-        return null;
-      }
+      let lastError: AIException | null = null;
 
       for (const model of this.modelCandidates) {
         try {
@@ -230,30 +263,46 @@ export class GeminiLearningProvider implements LearningModelProvider {
             return parsed;
           }
         } catch (err: any) {
-          const errMsg = err?.message || '';
-          const isQuota =
-            err?.status === 'RESOURCE_EXHAUSTED' ||
-            err?.code === 429 ||
-            errMsg.includes('429') ||
-            errMsg.includes('RESOURCE_EXHAUSTED') ||
-            errMsg.includes('Quota exceeded');
+          const classified = classifyGeminiError(err);
+          lastError = classified;
 
-          if (isQuota) {
-            // Model quota reached for this candidate, try next candidate silently
+          if (classified.code === 'QUOTA_EXHAUSTED') {
+            // Project-level quota / credit exhaustion is shared across all models in the project.
+            // Switching models does not bypass quota exhaustion and wastes resources.
+            this.quotaCooldownUntil = Date.now() + 15 * 60 * 1000;
+            if (userId !== 'system') {
+              budgetManager.recordUsage(userId, model, operation, estInputTokens, 0, 'rate_limited', classified.userMessage);
+            }
+            throw classified;
+          } else if (classified.code === 'AUTH_FAILED') {
+            // Shared API key credentials failed.
+            if (userId !== 'system') {
+              budgetManager.recordUsage(userId, model, operation, estInputTokens, 0, 'error', classified.userMessage);
+            }
+            throw classified;
+          } else if (classified.code === 'RATE_LIMITED') {
+            // Temporary per-minute rate limit on this model candidate; attempt next model candidate
+            console.warn(`[AI] Candidate ${model} temporarily rate-limited; attempting fallback model candidate...`);
             continue;
           } else {
-            console.warn(`[AI] Generation error with ${model}:`, errMsg.slice(0, 100));
-            break;
+            console.warn(`[AI] Generation error with ${model}:`, err?.message?.slice(0, 100));
+            continue;
           }
         }
       }
 
-      // Pause remote attempts if all models failed
-      this.quotaCooldownUntil = Date.now() + 15 * 60 * 1000;
-      if (userId !== 'system') {
-        budgetManager.recordUsage(userId, 'fallback', operation, estInputTokens, 0, 'error', 'All model candidates failed');
+      // If loop exited without returning and lastError exists
+      if (lastError) {
+        if (lastError.code === 'RATE_LIMITED' || lastError.code === 'QUOTA_EXHAUSTED') {
+          this.quotaCooldownUntil = Date.now() + 60 * 1000;
+        }
+        if (userId !== 'system') {
+          budgetManager.recordUsage(userId, 'fallback', operation, estInputTokens, 0, 'error', lastError.userMessage);
+        }
+        throw lastError;
       }
-      return null;
+
+      throw new AIException('GENERAL_ERROR', 'All model candidates failed to respond.');
     } finally {
       if (userId !== 'system') {
         budgetManager.endRequest(userId);
@@ -321,18 +370,28 @@ Output strictly in JSON:
   "confirmationSummary": string (if isDiscoveryComplete is true)
 }`;
 
-    const prompt = `Process the learner's message "${userMessage}" at turn ${turnsCount}.`;
-    const aiResult = await this.callGeminiJson<{
-      tutorReply: string;
-      quickReplies?: string[];
-      dimension?: DiscoveryMessage['dimension'];
-      updatedProfile: Partial<UserProfile>;
-      isDiscoveryComplete: boolean;
-      confirmationSummary?: string;
-    }>(prompt, systemPrompt);
+    try {
+      const prompt = `Process the learner's message "${userMessage}" at turn ${turnsCount}.`;
+      const aiResult = await this.callGeminiJson<{
+        tutorReply: string;
+        quickReplies?: string[];
+        dimension?: DiscoveryMessage['dimension'];
+        updatedProfile: Partial<UserProfile>;
+        isDiscoveryComplete: boolean;
+        confirmationSummary?: string;
+      }>(prompt, systemPrompt, {
+        userId: currentProfile.id,
+        operation: 'discovery_turn'
+      });
 
-    if (aiResult && aiResult.tutorReply) {
-      return aiResult;
+      if (aiResult && aiResult.tutorReply) {
+        return aiResult;
+      }
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] handleDiscoveryTurn using fallback due to non-quota failure:', err?.message);
     }
 
     // Adaptive local conversational fallback
@@ -560,10 +619,18 @@ Output strictly in JSON format:
 }`;
 
     const prompt = `Generate item ${currentQuestionIndexInSection + 1}/${activeSectionPlan.targetQuestionsCount} for section ${targetSection} at CEFR ${targetLevel}.`;
-    const generated = await this.callGeminiJson<Question>(prompt, systemPrompt, {
-      userId: profile.id,
-      operation: 'diagnostic_question'
-    });
+    let generated: Question | null = null;
+    try {
+      generated = await this.callGeminiJson<Question>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'diagnostic_question'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] generateAdaptiveDiagnosticQuestion using bank due to non-quota error:', err?.message);
+    }
 
     if (
       generated &&
@@ -754,7 +821,22 @@ Output JSON:
 }`;
 
       const prompt = `Assess writing response: "${userAnswer}"`;
-      const aiRubric = await this.callGeminiJson<WritingRubricScore & { usefulPhrases?: Array<{ phrase: string; meaning: string; how_to_use: string }> }>(prompt, systemPrompt);
+      let aiRubric: (WritingRubricScore & { usefulPhrases?: Array<{ phrase: string; meaning: string; how_to_use: string }> }) | null = null;
+      try {
+        aiRubric = await this.callGeminiJson<WritingRubricScore & { usefulPhrases?: Array<{ phrase: string; meaning: string; how_to_use: string }> }>(
+          prompt,
+          systemPrompt,
+          {
+            userId: profile.id,
+            operation: 'diagnostic_evaluate'
+          }
+        );
+      } catch (err: any) {
+        if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+          throw err;
+        }
+        console.warn('[AI] evaluateDiagnosticAnswer using local writing rubric due to non-quota error:', err?.message);
+      }
 
       const sentences = trimmed.split(/[.!?]+/).filter(Boolean).length;
       const isPass = sentences >= 2 && trimmed.length >= 30;
@@ -1033,7 +1115,18 @@ Output JSON:
 }`;
 
     const prompt = `Generate tailored study plan based on report ${report.id}`;
-    const aiPlan = await this.callGeminiJson<PersonalizedStudyPlan>(prompt, systemPrompt);
+    let aiPlan: PersonalizedStudyPlan | null = null;
+    try {
+      aiPlan = await this.callGeminiJson<PersonalizedStudyPlan>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'diagnostic_study_plan'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] generatePersonalizedStudyPlan using template due to non-quota error:', err?.message);
+    }
 
     if (aiPlan && aiPlan.prioritizedSkills && aiPlan.prioritizedSkills.length > 0) {
       return {
@@ -1209,7 +1302,10 @@ Output strictly JSON:
         target_questions_count?: number;
         skill_target: string;
       }>;
-    }>(prompt, systemPrompt);
+    }>(prompt, systemPrompt, {
+      userId: profile.id,
+      operation: 'lesson_plan'
+    });
 
     if (aiResult && aiResult.sections && aiResult.sections.length > 0) {
       let allocatedQuestions = 0;
@@ -1456,10 +1552,23 @@ Context topic: ${topic}.
 Target skill: ${targetSkillName || 'Core ' + section + ' skill for ' + profile.current_level}.
 Explanation and hints must be in ${lang}. Examples and prompt in natural English.
 
-Core rules based on activity type:
+Core rules based on section and activity type:
+- If section is "vocabulary" or activity is "vocab_acquisition":
+  * SUPPORT DIVERSE EXERCISE TYPES:
+    1. "meaning_from_context": Present a natural sentence with target word highlighted. Ask what the word means or implies in this sentence with 4 nuanced, plausible interpretation options (NOT single words, but interpretations of attitude, nuance, or semantic role).
+    2. "contextual_cloze": An authentic sentence with a blank "____". Options are 4 legitimate, plausible words of the same grammatical category with subtle semantic differences.
+    3. "usage_discrimination": Present 4 sentences using the target word; learner identifies which sentence uses the word correctly according to grammatical structure, prepositions, and natural collocation.
+    4. "collocations": Test natural word pairings (e.g., verb + noun, adjective + noun).
+    5. "meaning_distinction": Contrast the target word with a commonly confused or near-synonym word in a specific scenario.
+  * CRITICAL PEDAGOGICAL CONSTRAINTS FOR VOCABULARY:
+    - NEVER reveal the target definition or answer in the prompt, setup, or options.
+    - All 4 options must be PLAUSIBLE to a learner. NEVER use absurd or irrelevant distractors (e.g. no random words like "sleep" or "drink" for professional contexts).
+    - Ensure exactly ONE defensible correct answer.
+    - Provide complete "vocab_card" (word, part_of_speech, ipa, pronunciation_tip, meaning in ${lang}, collocation_pattern, example_general, example_workplace, similar_word_comparison). THIS CARD IS REVEALED IN FEEDBACK AFTER THE USER ANSWERS.
+    - Provide "reinforcement_prompt" (secondary_context, application_prompt, expected_usage_tip) testing or applying the word in a second distinct context.
+    - Set "vocab_exercise_type", "target_word", and "context_sentence".
 - If activity is "warmup_review": Provide a swift retrieval check testing recognition or identifying a common error.
 - If activity is "concept_practice": For question index 0, provide multiple_choice with concise concept_intro. For question index >= 1, provide fill_in_blank or sentence completion.
-- If activity is "vocab_acquisition": Provide a complete "vocab_card" (word, part_of_speech, ipa, pronunciation_tip, meaning in ${lang}, collocation_pattern, example_general, example_workplace, similar_word_comparison) and a contextual test question.
 - If activity is "reading_analysis": Provide a rich "reading_passage" (120-150 words) and a comprehension or subtle inference question.
 - If activity is "writing_production" or "exit_synthesis": Provide a realistic free_writing prompt asking for 2-3 sentences.
 
@@ -1472,12 +1581,20 @@ JSON Output Schema:
   "question_type": "multiple_choice" | "fill_in_blank" | "reading_comprehension" | "free_writing",
   "difficulty": "${profile.current_level}",
   "context_topic": "${topic}",
-  "concept_intro": string (optional),
-  "vocab_card": object (required if vocabulary),
-  "reading_passage": { "title": string, "text": string, "word_count": number, "topic": string } (required if reading),
+  "vocab_exercise_type": "meaning_from_context" | "contextual_cloze" | "usage_discrimination" | "collocations" | "meaning_distinction" | "sentence_application" | "retrieval_practice",
+  "target_word": string,
+  "context_sentence": string,
+  "concept_intro": string,
+  "vocab_card": object,
+  "reinforcement_prompt": {
+    "secondary_context": string,
+    "application_prompt": string,
+    "expected_usage_tip": string
+  },
+  "reading_passage": { "title": string, "text": string, "word_count": number, "topic": string },
   "prompt": string,
-  "options": [ { "id": "A"|"B"|"C"|"D", "text": string } ] (optional),
-  "expected_answer_ids": ["A"|"B"|"C"|"D"] (optional),
+  "options": [ { "id": "A"|"B"|"C"|"D", "text": string } ],
+  "expected_answer_ids": ["A"|"B"|"C"|"D"],
   "expected_answer_text": string,
   "accepted_alternatives": [string],
   "hint": string,
@@ -1485,7 +1602,18 @@ JSON Output Schema:
 }`;
 
     const prompt = `Generate question ${questionIndex + 1} of ${totalInActivity} for ${section} (${activityType || 'practice'}).`;
-    const result = await this.callGeminiJson<Question>(prompt, systemPrompt);
+    let result: Question | null = null;
+    try {
+      result = await this.callGeminiJson<Question>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'lesson_question'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] generateQuestion using curriculum bank due to non-quota error:', err?.message);
+    }
 
     if (result && result.prompt) {
       return {
@@ -1643,7 +1771,18 @@ Output JSON format:
 }`;
 
     const prompt = `Learner answer: "${userAnswer}"`;
-    const aiResult = await this.callGeminiJson<AnswerEvaluation>(prompt, systemPrompt);
+    let aiResult: AnswerEvaluation | null = null;
+    try {
+      aiResult = await this.callGeminiJson<AnswerEvaluation>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'lesson_evaluate'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] evaluateAnswer using deterministic local rubric due to non-quota error:', err?.message);
+    }
 
     if (aiResult && aiResult.verdict) {
       if (isWriting) {
@@ -1746,7 +1885,18 @@ Output in JSON:
 }`;
 
     const prompt = `Help the student with action: ${action}`;
-    const result = await this.callGeminiJson<TutorAssistantResponse>(prompt, systemPrompt);
+    let result: TutorAssistantResponse | null = null;
+    try {
+      result = await this.callGeminiJson<TutorAssistantResponse>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'tutor_assist'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] tutorAssist using fallback due to non-quota error:', err?.message);
+    }
 
     if (result && result.content) {
       return result;
@@ -2139,10 +2289,18 @@ OUTPUT JSON SCHEMA:
 
     const prompt = `${conversationContext}Learner's current question: "${message}"`;
 
-    const aiResult = await this.callGeminiJson<DeepDiveInquiryResponse>(prompt, systemPrompt, {
-      userId: profile.id,
-      operation: 'tutor_deep_dive'
-    });
+    let aiResult: DeepDiveInquiryResponse | null = null;
+    try {
+      aiResult = await this.callGeminiJson<DeepDiveInquiryResponse>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'tutor_deep_dive'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] deepDiveInquiry using fallback due to non-quota error:', err?.message);
+    }
 
     if (aiResult && aiResult.reply) {
       return aiResult;
@@ -2387,12 +2545,28 @@ Output JSON:
 }`;
 
     const prompt = `Generate structured end-of-lesson summary reflecting the ${targetMins}-minute study session.`;
-    const aiResult = await this.callGeminiJson<{
+    let aiResult: {
       key_takeaways: string[];
       vocabulary_learned: string[];
       recurring_mistakes_flagged: string[];
       next_review_topics: string[];
-    }>(prompt, systemPrompt);
+    } | null = null;
+    try {
+      aiResult = await this.callGeminiJson<{
+        key_takeaways: string[];
+        vocabulary_learned: string[];
+        recurring_mistakes_flagged: string[];
+        next_review_topics: string[];
+      }>(prompt, systemPrompt, {
+        userId: profile.id,
+        operation: 'lesson_summary'
+      });
+    } catch (err: any) {
+      if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED' || err.code === 'AUTH_FAILED')) {
+        throw err;
+      }
+      console.warn('[AI] generateLessonSummary using template due to non-quota error:', err?.message);
+    }
 
     if (aiResult) {
       return {

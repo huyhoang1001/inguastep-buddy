@@ -19,6 +19,7 @@ import {
   SimilarWordComparison
 } from '../types/learning.ts';
 import { tutorDeepDive } from '../services/api.ts';
+import { AIErrorAlert } from './AIErrorAlert.tsx';
 
 interface TutorDeepDiveChatProps {
   question: Question;
@@ -35,6 +36,8 @@ export const TutorDeepDiveChat: React.FC<TutorDeepDiveChatProps> = ({
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [chatError, setChatError] = useState<any>(null);
+  const [failedPrompt, setFailedPrompt] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Reset or clear chat when question changes
@@ -42,13 +45,15 @@ export const TutorDeepDiveChat: React.FC<TutorDeepDiveChatProps> = ({
     setMessages([]);
     setInputMessage('');
     setIsExpanded(true);
+    setChatError(null);
+    setFailedPrompt('');
   }, [question.id]);
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > 0 || chatError) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isLoading]);
+  }, [messages, isLoading, chatError]);
 
   // Contextual quick prompt suggestions
   const getQuickPrompts = (): string[] => {
@@ -83,6 +88,9 @@ export const TutorDeepDiveChat: React.FC<TutorDeepDiveChatProps> = ({
     const text = (textToSend || inputMessage).trim();
     if (!text || isLoading) return;
 
+    setChatError(null);
+    setFailedPrompt('');
+
     const userMsg: DeepDiveChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -111,13 +119,12 @@ export const TutorDeepDiveChat: React.FC<TutorDeepDiveChatProps> = ({
 
       setMessages([...newMessages, tutorMsg]);
     } catch (err: any) {
-      const errorMsg: DeepDiveChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'tutor',
-        content: err?.message || 'Sorry, I encountered an issue replying. Please try again.',
-        created_at: new Date().toISOString()
-      };
-      setMessages([...newMessages, errorMsg]);
+      // Preserve input for retry and surface error alert
+      setChatError(err);
+      setFailedPrompt(text);
+      setInputMessage(text);
+      // Remove the orphaned user message so the thread remains coherent
+      setMessages(messages);
     } finally {
       setIsLoading(false);
     }
@@ -289,6 +296,19 @@ export const TutorDeepDiveChat: React.FC<TutorDeepDiveChatProps> = ({
 
               <div ref={messagesEndRef} />
             </div>
+          )}
+
+          {/* AI Quota & Service Error Alert */}
+          {chatError && (
+            <AIErrorAlert
+              error={chatError}
+              onRetry={failedPrompt ? () => handleSend(failedPrompt) : undefined}
+              onDismiss={() => {
+                setChatError(null);
+                setFailedPrompt('');
+              }}
+              compact
+            />
           )}
 
           {/* Input Box */}

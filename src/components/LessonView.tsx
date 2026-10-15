@@ -29,6 +29,7 @@ import {
 } from '../types/learning.ts';
 import { VocabularyCard } from './VocabularyCard.tsx';
 import { TutorDeepDiveChat } from './TutorDeepDiveChat.tsx';
+import { AIErrorAlert } from './AIErrorAlert.tsx';
 import {
   generateQuestion,
   evaluateAnswer,
@@ -68,6 +69,10 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [evaluation, setEvaluation] = useState<AnswerEvaluation | null>(null);
+  const [aiError, setAiError] = useState<any>(null);
+  const [assistError, setAssistError] = useState<any>(null);
+  const [lastFailedAction, setLastFailedAction] = useState<(() => void) | null>(null);
+  const [lastAssistAction, setLastAssistAction] = useState<'hint' | 'simpler_explanation' | 'another_example' | 'clarify_ambiguity' | null>(null);
 
   // Questions completed per section: sectionIndex -> completed count
   const [sectionProgress, setSectionProgress] = useState<Record<number, number>>({});
@@ -150,6 +155,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
 
   const loadQuestionForSection = async (sectionIdx: number, qIdx: number) => {
     setIsLoadingQuestion(true);
+    setAiError(null);
     setEvaluation(null);
     setUserAnswer('');
     setTutorAssistData(null);
@@ -184,6 +190,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
       });
     } catch (err) {
       console.error('Failed to load question:', err);
+      setAiError(err);
+      setLastFailedAction(() => () => loadQuestionForSection(sectionIdx, qIdx));
     } finally {
       setIsLoadingQuestion(false);
     }
@@ -193,6 +201,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
     if (!currentQuestion || !userAnswer.trim()) return;
 
     setIsSubmitting(true);
+    setAiError(null);
     try {
       const result = await evaluateAnswer(currentQuestion, userAnswer, plan.lesson_id);
       setEvaluation(result);
@@ -235,6 +244,9 @@ export const LessonView: React.FC<LessonViewProps> = ({
       });
     } catch (err) {
       console.error('Failed to evaluate answer:', err);
+      setAiError(err);
+      // Explicitly preserve userAnswer so learner does not lose writing / progress!
+      setLastFailedAction(() => () => handleSubmitAnswer());
     } finally {
       setIsSubmitting(false);
     }
@@ -242,16 +254,19 @@ export const LessonView: React.FC<LessonViewProps> = ({
 
   const handleTutorAction = async (action: 'hint' | 'simpler_explanation' | 'another_example' | 'clarify_ambiguity') => {
     if (!currentQuestion) return;
+    setLastAssistAction(action);
     if (action === 'hint') {
       setShowHint(!showHint);
       return;
     }
     setIsLoadingAssist(true);
+    setAssistError(null);
     try {
       const res = await requestTutorAssist(currentQuestion, action);
       setTutorAssistData(res);
     } catch (err) {
       console.error('Tutor assist error:', err);
+      setAssistError(err);
     } finally {
       setIsLoadingAssist(false);
     }
@@ -472,6 +487,14 @@ export const LessonView: React.FC<LessonViewProps> = ({
       </div>
 
       {/* Main Question / Teaching Area */}
+      {aiError && (
+        <AIErrorAlert
+          error={aiError}
+          onRetry={lastFailedAction || undefined}
+          onDismiss={() => setAiError(null)}
+        />
+      )}
+
       {isLoadingQuestion ? (
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center flex flex-col items-center justify-center space-y-4">
           <div className="w-9 h-9 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -482,7 +505,16 @@ export const LessonView: React.FC<LessonViewProps> = ({
             </p>
           </div>
         </div>
-      ) : currentQuestion ? (
+      ) : !currentQuestion ? (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-10 text-center flex flex-col items-center justify-center space-y-4">
+          <AIErrorAlert
+            error={aiError || 'Unable to generate question.'}
+            onRetry={lastFailedAction || (() => loadQuestionForSection(currentSectionIndex, questionIndexInSection))}
+            onDismiss={() => setAiError(null)}
+            className="w-full max-w-xl"
+          />
+        </div>
+      ) : (
         <div className="space-y-6">
           {/* Section Heading & Target */}
           <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800">
@@ -537,6 +569,16 @@ export const LessonView: React.FC<LessonViewProps> = ({
                 {currentQuestion.reading_passage.text}
               </p>
             </div>
+          )}
+
+          {/* Error alert for answer evaluation or question failure */}
+          {aiError && (
+            <AIErrorAlert
+              error={aiError}
+              onRetry={lastFailedAction || undefined}
+              onDismiss={() => setAiError(null)}
+              className="mb-4"
+            />
           )}
 
           {/* Question Card: ONE QUESTION AT A TIME */}
@@ -698,6 +740,17 @@ export const LessonView: React.FC<LessonViewProps> = ({
                 This seems ambiguous
               </button>
             </div>
+
+            {/* Tutor Assist Error Alert */}
+            {assistError && (
+              <AIErrorAlert
+                error={assistError}
+                onRetry={lastAssistAction ? () => handleTutorAction(lastAssistAction) : undefined}
+                onDismiss={() => setAssistError(null)}
+                compact
+                className="mt-3"
+              />
+            )}
           </div>
 
           {/* Hint Dropdown */}
@@ -931,7 +984,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
             </div>
           )}
         </div>
-      ) : null}
+      )}
     </div>
   );
 };

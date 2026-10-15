@@ -24,6 +24,7 @@ import {
   generateLessonSummary,
   getMemory
 } from './services/api.ts';
+import { AIErrorAlert } from './components/AIErrorAlert.tsx';
 import { localStore } from './services/localStore.ts';
 import { calculateMilestones } from './services/milestoneService.ts';
 
@@ -49,6 +50,8 @@ export default function App() {
   const [showMilestonesModal, setShowMilestonesModal] = useState<boolean>(false);
 
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [appError, setAppError] = useState<any>(null);
+  const [lastFailedAction, setLastFailedAction] = useState<(() => void) | null>(null);
 
   // Initialize application
   useEffect(() => {
@@ -57,6 +60,7 @@ export default function App() {
 
   const initApp = async () => {
     setIsLoading(true);
+    setAppError(null);
     try {
       // 1. Check or establish session
       let session = await getAuthSession();
@@ -170,6 +174,7 @@ export default function App() {
   ) => {
     if (!activePlan) return;
     setIsLoading(true);
+    setAppError(null);
     try {
       const summary = await generateLessonSummary(activePlan, attempts, timeSpentMinutes);
       setActiveSummary(summary);
@@ -179,6 +184,8 @@ export default function App() {
       await refreshMilestones();
     } catch (err) {
       console.error('Failed to generate summary:', err);
+      setAppError(err);
+      setLastFailedAction(() => () => handleLessonFinished(attempts, timeSpentMinutes));
     } finally {
       setIsLoading(false);
     }
@@ -186,6 +193,7 @@ export default function App() {
 
   const handleStartNewLesson = async (overrideMinutes?: number) => {
     setIsLoading(true);
+    setAppError(null);
     try {
       const targetMins = overrideMinutes || profile?.daily_minutes;
       // Pass forceRegenerate = true when explicitly clicking "Start New Lesson"
@@ -194,6 +202,8 @@ export default function App() {
       await refreshMilestones();
     } catch (err) {
       console.error('Failed to generate new plan:', err);
+      setAppError(err);
+      setLastFailedAction(() => () => handleStartNewLesson(overrideMinutes));
     } finally {
       setIsLoading(false);
     }
@@ -238,6 +248,17 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
+        {appError && (
+          <div className="max-w-4xl mx-auto px-4 pt-4">
+            <AIErrorAlert
+              error={appError}
+              onRetry={lastFailedAction || undefined}
+              onDismiss={() => setAppError(null)}
+              className="mb-4"
+            />
+          </div>
+        )}
+
         {activePlan ? (
           <LessonView
             profile={profile}

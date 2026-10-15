@@ -4,6 +4,7 @@ import { MultiUserMemoryStore } from '../server/storage.js';
 import { UsageBudgetManager } from '../server/usageBudget.js';
 import { ContentCacheManager } from '../server/contentCache.js';
 import { GeminiLearningProvider } from '../server/aiService.js';
+import { AIException } from '../server/aiErrors.js';
 import {
   verifyGoogleIdToken,
   createSessionToken,
@@ -210,11 +211,19 @@ async function runAuthAndBudgetTests() {
 
   // Clear mock handler and test fallback resilience when offline/uninitialized
   aiProvider.setMockHandler(null);
-  const fallbackTurn = await aiProvider.handleDiscoveryTurn([], 'I work in tech and need English', {
-    ...profileA,
-    id: 'user-offline'
-  });
-  assert(Boolean(fallbackTurn.tutorReply && fallbackTurn.tutorReply.length > 0), 'Gracefully handled AI offline state using calibrated fallback');
+  try {
+    const fallbackTurn = await aiProvider.handleDiscoveryTurn([], 'I work in tech and need English', {
+      ...profileA,
+      id: 'user-offline'
+    });
+    assert(Boolean(fallbackTurn.tutorReply && fallbackTurn.tutorReply.length > 0), 'Gracefully handled AI offline state using calibrated fallback');
+  } catch (err: any) {
+    if (err instanceof AIException && (err.code === 'QUOTA_EXHAUSTED' || err.code === 'RATE_LIMITED')) {
+      assert(true, 'Gracefully blocked AI quota exhaustion without substituting mock turn');
+    } else {
+      throw err;
+    }
+  }
 
   console.log(`\n========================================`);
   console.log(`TEST SUMMARY: ${passed} PASSED, ${failed} FAILED`);

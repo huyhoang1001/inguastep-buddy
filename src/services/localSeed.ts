@@ -89,6 +89,12 @@ export const INITIAL_VOCABULARY: VocabularyItem[] = [
       difference: 'alleviate thường dùng cho nỗi đau, triệu chứng bệnh; mitigate thường dùng cho rủi ro, tổn thất hoặc thiệt hại.'
     },
     review_stage: 3,
+    mastery_stage: 'practicing',
+    mastery_score: 55,
+    contexts_encountered: [
+      'We added fallback servers to mitigate the risk of downtime during database migration.'
+    ],
+    exercise_types_passed: ['meaning_from_context'],
     next_review_at: new Date(Date.now() + 86400000 * 2).toISOString(),
     first_seen_at: new Date(Date.now() - 86400000 * 3).toISOString(),
     last_reviewed_at: new Date().toISOString(),
@@ -110,6 +116,12 @@ export const INITIAL_VOCABULARY: VocabularyItem[] = [
       difference: 'simplify là làm cho dễ hiểu hơn; streamline là cắt bớt các bước rườm rà để vận hành hiệu quả hơn.'
     },
     review_stage: 1,
+    mastery_stage: 'encountered',
+    mastery_score: 25,
+    contexts_encountered: [
+      'We automated the release cycle to streamline our deployment pipeline.'
+    ],
+    exercise_types_passed: ['contextual_cloze'],
     next_review_at: new Date(Date.now() + 86400000).toISOString(),
     first_seen_at: new Date().toISOString(),
     last_reviewed_at: new Date().toISOString(),

@@ -39,6 +39,7 @@ import {
   completeDiagnosticSession
 } from '../services/api.ts';
 import { TutorDeepDiveChat } from './TutorDeepDiveChat.tsx';
+import { AIErrorAlert } from './AIErrorAlert.tsx';
 
 interface AdaptiveDiagnosticViewProps {
   onAssessmentCompleted: (report: DiagnosticReport, studyPlan: PersonalizedStudyPlan) => void;
@@ -60,6 +61,8 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
   const [mustStop, setMustStop] = useState<boolean>(false);
   const [flagged, setFlagged] = useState<boolean>(false);
   const [pausedMessage, setPausedMessage] = useState<string>('');
+  const [aiError, setAiError] = useState<any>(null);
+  const [lastFailedAction, setLastFailedAction] = useState<(() => void) | null>(null);
 
   // Section completion transition state
   const [sectionCompletedNotice, setSectionCompletedNotice] = useState<{
@@ -80,6 +83,7 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
 
   const loadExistingSession = async () => {
     setIsLoading(true);
+    setAiError(null);
     try {
       const data = await getDiagnosticSession();
       if (data.session && data.session.status === 'in_progress') {
@@ -92,6 +96,8 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
       }
     } catch (err) {
       console.error('Failed to load session:', err);
+      setAiError(err);
+      setLastFailedAction(() => () => loadExistingSession());
     } finally {
       setIsLoading(false);
     }
@@ -99,6 +105,7 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
 
   const handleStartMode = async (mode: DiagnosticMode) => {
     setIsLoading(true);
+    setAiError(null);
     try {
       const newSession = await startDiagnosticSession(mode);
       setSession(newSession);
@@ -111,6 +118,8 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
       setSectionCompletedNotice(null);
     } catch (err) {
       console.error('Failed to start diagnostic:', err);
+      setAiError(err);
+      setLastFailedAction(() => () => handleStartMode(mode));
     } finally {
       setIsLoading(false);
     }
@@ -118,6 +127,7 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
 
   const loadNextQuestion = async () => {
     setIsLoading(true);
+    setAiError(null);
     setUserAnswer('');
     setLastEvaluation(null);
     setLastRubric(null);
@@ -130,6 +140,8 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
       setSession(data.session);
     } catch (err) {
       console.error('Failed to load next question:', err);
+      setAiError(err);
+      setLastFailedAction(() => () => loadNextQuestion());
     } finally {
       setIsLoading(false);
     }
@@ -139,6 +151,7 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
     if (!currentQuestion || !userAnswer.trim() || isEvaluating) return;
 
     setIsEvaluating(true);
+    setAiError(null);
     try {
       const result = await submitDiagnosticAnswer(currentQuestion, userAnswer);
       setLastEvaluation(result.evaluation);
@@ -156,6 +169,9 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
       }
     } catch (err) {
       console.error('Failed to submit answer:', err);
+      setAiError(err);
+      // Notice: userAnswer is explicitly NOT cleared, preserving student's work
+      setLastFailedAction(() => () => handleSubmitAnswer());
     } finally {
       setIsEvaluating(false);
     }
@@ -173,11 +189,14 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
 
   const handleFinishAssessment = async () => {
     setIsLoading(true);
+    setAiError(null);
     try {
       const { report, studyPlan } = await completeDiagnosticSession();
       onAssessmentCompleted(report, studyPlan);
     } catch (err) {
       console.error('Failed to complete assessment:', err);
+      setAiError(err);
+      setLastFailedAction(() => () => handleFinishAssessment());
     } finally {
       setIsLoading(false);
     }
@@ -249,6 +268,14 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
           <div className="bg-emerald-950/40 border border-emerald-800/40 p-4 rounded-2xl text-xs text-emerald-300">
             {pausedMessage}
           </div>
+        )}
+
+        {aiError && (
+          <AIErrorAlert
+            error={aiError}
+            onRetry={lastFailedAction || undefined}
+            onDismiss={() => setAiError(null)}
+          />
         )}
 
         {/* 3 Explicit Diagnostic Modes */}
@@ -568,6 +595,16 @@ export const AdaptiveDiagnosticView: React.FC<AdaptiveDiagnosticViewProps> = ({
             </button>
           )}
         </div>
+      )}
+
+      {/* Error alert for quota exhaustion or temporary errors */}
+      {aiError && (
+        <AIErrorAlert
+          error={aiError}
+          onRetry={lastFailedAction || undefined}
+          onDismiss={() => setAiError(null)}
+          className="mb-4"
+        />
       )}
 
       {/* Active Question Content */}

@@ -10,7 +10,9 @@ import {
   DiagnosticReport,
   PersonalizedStudyPlan,
   LearningDataExport,
-  ActiveLessonState
+  ActiveLessonState,
+  VocabExerciseType,
+  VocabMasteryStage
 } from '../types/learning.ts';
 import {
   DEFAULT_PROFILE,
@@ -394,15 +396,169 @@ class LocalLearningStore {
         example_workplace: item.example_workplace || '',
         similar_word_comparison: item.similar_word_comparison,
         review_stage: 1,
+        mastery_stage: item.mastery_stage || 'encountered',
+        mastery_score: item.mastery_score ?? 25,
+        contexts_encountered: item.contexts_encountered || [],
+        exercise_types_passed: item.exercise_types_passed || [],
+        common_confusions: item.common_confusions || [],
         next_review_at: new Date(Date.now() + 86400000).toISOString(),
         first_seen_at: new Date().toISOString(),
         last_reviewed_at: new Date().toISOString(),
-        times_correct: 1,
-        times_incorrect: 0
+        times_correct: item.times_correct ?? 1,
+        times_incorrect: item.times_incorrect ?? 0
       };
       await this.setStoreData('vocabulary', newItem.id, newItem);
       return newItem;
     }
+  }
+
+  /**
+   * Evidence-based vocabulary mastery calculation.
+   * A word is NEVER marked as mastered based on a single immediate recognition.
+   * Progress requires:
+   * - Multiple distinct contextual sentences
+   * - Success across varied exercise types (meaning_from_context, contextual_cloze, usage_discrimination, collocations, etc.)
+   * - Spaced repetition and high retrieval accuracy over time
+   */
+  public async recordVocabularyEvidence(params: {
+    word: string;
+    cardData?: Partial<VocabularyItem>;
+    isCorrect: boolean;
+    contextSentence?: string;
+    exerciseType?: VocabExerciseType;
+    confusedWith?: string;
+  }): Promise<{
+    item: VocabularyItem;
+    update: {
+      word: string;
+      previous_stage: VocabMasteryStage;
+      new_stage: VocabMasteryStage;
+      score: number;
+      explanation: string;
+    };
+  }> {
+    const list = await this.getVocabulary();
+    let existing = list.find(v => v.word.toLowerCase() === params.word.toLowerCase());
+
+    if (!existing) {
+      existing = await this.saveVocabularyItem({
+        word: params.word,
+        ...(params.cardData || {}),
+        times_correct: 0,
+        times_incorrect: 0,
+        mastery_stage: 'encountered',
+        mastery_score: 15,
+        contexts_encountered: params.contextSentence ? [params.contextSentence] : [],
+        exercise_types_passed: [],
+        common_confusions: []
+      });
+    }
+
+    const previousStage = existing.mastery_stage || 'encountered';
+    const timesCorrect = existing.times_correct + (params.isCorrect ? 1 : 0);
+    const timesIncorrect = existing.times_incorrect + (params.isCorrect ? 0 : 1);
+
+    // Merge contexts encountered (deduplicate)
+    const contexts = Array.from(new Set([
+      ...(existing.contexts_encountered || []),
+      ...(params.contextSentence ? [params.contextSentence] : [])
+    ]));
+
+    // Merge exercise types passed
+    const exerciseTypes = Array.from(new Set([
+      ...(existing.exercise_types_passed || []),
+      ...(params.isCorrect && params.exerciseType ? [params.exerciseType] : [])
+    ]));
+
+    // Merge common confusions
+    const confusions = Array.from(new Set([
+      ...(existing.common_confusions || []),
+      ...(!params.isCorrect && params.confusedWith ? [params.confusedWith] : [])
+    ]));
+
+    const totalAttempts = timesCorrect + timesIncorrect;
+    const accuracy = totalAttempts > 0 ? timesCorrect / totalAttempts : 0;
+    const uniqueContexts = contexts.length;
+    const uniqueTypes = exerciseTypes.length;
+
+    let newStage: VocabMasteryStage = 'encountered';
+    let newScore = 20;
+    let newReviewStage: 1 | 3 | 7 | 14 | 30 = 1;
+    let explanation = '';
+
+    if (!params.isCorrect) {
+      // Slip / Error: reset review interval for tomorrow, reduce score
+      newReviewStage = 1;
+      if (previousStage === 'mastered') {
+        newStage = 'applied';
+        newScore = 75;
+        explanation = `Mistake recorded. Demoted from Mastered to Applied for review tomorrow.`;
+      } else if (previousStage === 'applied') {
+        newStage = 'retrieved';
+        newScore = 60;
+        explanation = `Needs reinforcement in this context. Review scheduled for tomorrow.`;
+      } else {
+        newStage = previousStage;
+        newScore = Math.max(10, (existing.mastery_score || 25) - 15);
+        explanation = `Contextual slip recorded with distractor "${params.confusedWith || 'alternative'}". Reviewing tomorrow.`;
+      }
+    } else {
+      // Correct performance: rigorous multi-evidence progression
+      if (timesCorrect >= 5 && uniqueContexts >= 3 && uniqueTypes >= 3 && accuracy >= 0.85) {
+        newStage = 'mastered';
+        newScore = 100;
+        newReviewStage = 30;
+        explanation = `Full mastery verified: successfully retrieved and applied across ${uniqueContexts} distinct contexts and ${uniqueTypes} exercise formats (${Math.round(accuracy * 100)}% accuracy).`;
+      } else if (timesCorrect >= 4 && uniqueContexts >= 3 && uniqueTypes >= 2 && accuracy >= 0.8) {
+        newStage = 'applied';
+        newScore = 90;
+        newReviewStage = 14;
+        explanation = `Applied stage reached: strong active usage across ${uniqueContexts} contexts and ${uniqueTypes} exercise types.`;
+      } else if (timesCorrect >= 3 && uniqueContexts >= 2 && uniqueTypes >= 2 && accuracy >= 0.7) {
+        newStage = 'retrieved';
+        newScore = 75;
+        newReviewStage = 7;
+        explanation = `Retrieved stage reached: demonstrated contextual understanding without immediate answer revelation.`;
+      } else if (timesCorrect >= 2 && (uniqueContexts >= 2 || uniqueTypes >= 2)) {
+        newStage = 'practicing';
+        newScore = 50;
+        newReviewStage = 3;
+        explanation = `Practicing stage reached: recognized and interpreted in ${uniqueContexts} different contexts.`;
+      } else {
+        newStage = 'encountered';
+        newScore = 25;
+        newReviewStage = 1;
+        explanation = `First successful demonstration in context. Continued practice across different sentence structures is required to build true mastery.`;
+      }
+    }
+
+    const updated: VocabularyItem = {
+      ...existing,
+      ...(params.cardData || {}),
+      times_correct: timesCorrect,
+      times_incorrect: timesIncorrect,
+      contexts_encountered: contexts,
+      exercise_types_passed: exerciseTypes,
+      common_confusions: confusions,
+      mastery_stage: newStage,
+      mastery_score: newScore,
+      review_stage: newReviewStage,
+      next_review_at: new Date(Date.now() + newReviewStage * 86400000).toISOString(),
+      last_reviewed_at: new Date().toISOString()
+    };
+
+    await this.setStoreData('vocabulary', updated.id, updated);
+
+    return {
+      item: updated,
+      update: {
+        word: params.word,
+        previous_stage: previousStage,
+        new_stage: newStage,
+        score: newScore,
+        explanation
+      }
+    };
   }
 
   // =========================================================================
